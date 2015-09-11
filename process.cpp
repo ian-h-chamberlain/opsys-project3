@@ -1,7 +1,7 @@
 #include "process.h"
 #include <iostream>
 
-Process::Process(num, b_time, bursts, io_time) {
+Process::Process(int num, int b_time, int bursts, int io_time) {
     this->proc_num = num;
     this->burst_time = b_time;
     this->num_bursts = bursts;
@@ -9,7 +9,7 @@ Process::Process(num, b_time, bursts, io_time) {
     cur_burst = 0;
 }
 
-Process::runBurst() {
+void Process::runBurst() {
     if (cur_burst < num_bursts)
         cur_burst++;
     else {
