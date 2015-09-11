@@ -1,15 +1,15 @@
 #include <iostream>
 #include <fstream>
-#include <vector>
+#include <deque>
 #include <cstdlib>
 #include <string>
 #include <cstdio>
 
 #include "process.h"
 
-void readFile(const std::string &filename, std::vector<Process> &processes);
-int simulate(const std::vector<Process> &processes);
-void printQueue(const std::vector<Process> &queueToPrint);
+void readFile(const std::string &filename, std::deque<Process> &processes);
+int simulate(const std::deque<Process> &processes);
+void printQueue(const std::deque<Process> &queueToPrint);
 
 /**
  * Operating Systems Project 1
@@ -24,9 +24,9 @@ int main (int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    std::vector<Process> processes;
+    std::deque<Process> processes;
 
-    // read the input file and populate the vector
+    // read the input file and populate the deque
     readFile(argv[1], processes);
 
     std::cout << "time " << simulate(processes) << "ms: Simulator ended" << std::endl;
@@ -37,9 +37,14 @@ int main (int argc, char* argv[]) {
 /**
  * simulate: Simulate processes based on the queue passed in
  */
-int simulate(const std::vector<Process> &processes) {
-    std::vector<Process> execQueue(processes);
-    std::vector<Process> ioQueue;
+int simulate(const std::deque<Process> &processes) {
+    std::deque<Process> execQueue(processes);
+    std::deque<Process> ioQueue;
+
+    // number of processes
+
+    // context-switch time delay (ms)
+    int t_cs = 13;
 
     // initial cpu time is zero
     int t = 0;
@@ -47,11 +52,33 @@ int simulate(const std::vector<Process> &processes) {
     printQueue(execQueue);
 
     // run process until we run out of processes in either queue
-    /*
-    while (execQueue.size() != 0 && ioQueue.size() != 0) {
-        std::cout << "time " << t << "ms: ";
+    while (execQueue.size() != 0) { // || ioQueue.size() != 0) {
+        // add time for context switch
+        t += t_cs;
+
+        if (execQueue.size() != 0) {
+            // accept the new process
+            Process curProc = execQueue.front();
+            execQueue.pop_front();
+
+            // print that it is beginning 
+            std::cout << "time " << t << "ms: P" << curProc.getNum()
+                << " started using the CPU ";
+            printQueue(execQueue);
+
+            // and change the clock time and number of bursts it needs
+            t += curProc.getBurstTime();
+            curProc.runBurst();
+            std::cout << "time " << t << "ms: P" << curProc.getNum()
+                << " completed its CPU burst ";
+            printQueue(execQueue);
+
+            // add to the ioQueue once process completes its burst
+            if (!curProc.isComplete()) {
+                ioQueue.push_back(curProc);
+            }
+        }
     }
-    */
 
     return t;
 }
@@ -59,7 +86,11 @@ int simulate(const std::vector<Process> &processes) {
 /**
  *  printQueue: a helper function to print the process queue
  */
-void printQueue(const std::vector<Process> &queueToPrint) {
+void printQueue(const std::deque<Process> &queueToPrint) {
+    if (queueToPrint.size() == 0) {
+        std::cout << std::endl;
+        return;
+    }
     // print [Q 1 2 ... ]
     std::cout << "[Q ";
     for (unsigned int i=0; i<queueToPrint.size() - 1; i++) {
@@ -69,11 +100,11 @@ void printQueue(const std::vector<Process> &queueToPrint) {
 }
 
 /**
- * readFile: use the provided input filename to populate the provided vector
+ * readFile: use the provided input filename to populate the provided deque
  * with Process objects
  */
-void readFile(const std::string &filename, std::vector<Process> &processes) {
-    // read the input file and populate the vector
+void readFile(const std::string &filename, std::deque<Process> &processes) {
+    // read the input file and populate the deque
     std::ifstream infile(filename.c_str());
     while (infile.peek() != EOF) {
         if (infile.peek() == '#' || infile.peek() == '\n') {
