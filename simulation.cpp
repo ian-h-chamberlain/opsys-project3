@@ -40,12 +40,14 @@ int simulate(const std::deque<Process> &processes) {
             // and change the clock time and number of bursts it needs
             t += curProc.getBurstTime();
             curProc.runBurst();
-            std::cout << "time " << t << "ms: P" << curProc.getNum()
-                << " completed its CPU burst ";
-            printQueue(execQueue);
 
-            // add to the ioQueue once process completes its burst
+            // check whether or not the process should be terminated
             if (!curProc.isComplete()) {
+                std::cout << "time " << t << "ms: P" << curProc.getNum()
+                    << " completed its CPU burst ";
+                printQueue(execQueue);
+
+                // add to the ioQueue once process completes its burst
                 execQueue.push_back(curProc);
             }
             else {
