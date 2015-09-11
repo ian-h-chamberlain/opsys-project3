@@ -10,8 +10,9 @@ Process::Process(int num, int b_time, int bursts, int io_time) {
 }
 
 void Process::runBurst() {
-    if (cur_burst < num_bursts)
+    if (cur_burst < num_bursts) {
         cur_burst++;
+    }
     else {
         std::cerr << "Attempt to run burst after process is already complete!" << std::endl;
     }

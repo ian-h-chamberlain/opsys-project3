@@ -46,7 +46,12 @@ int simulate(const std::deque<Process> &processes) {
 
             // add to the ioQueue once process completes its burst
             if (!curProc.isComplete()) {
-                ioQueue.push_back(curProc);
+                execQueue.push_back(curProc);
+            }
+            else {
+                std::cout << "time " << t << "ms: P" << curProc.getNum()
+                    << " terminated ";
+                printQueue(execQueue);
             }
         }
     }

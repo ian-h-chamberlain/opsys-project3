@@ -15,7 +15,7 @@ public:
     int getNumBursts() const { return num_bursts; }
     int getIOTime() const { return io_time; }
     void runBurst();
-    bool isComplete() { return cur_burst < num_bursts; }
+    bool isComplete() { return cur_burst >= num_bursts; }
 };
 
 #endif
