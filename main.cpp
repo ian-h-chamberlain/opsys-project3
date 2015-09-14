@@ -2,13 +2,13 @@
 #include <fstream>
 #include <cstdlib>
 #include <string>
-#include <deque>
+#include <list>
 #include <cstdio>
 
 #include "process.h"
 
-void readFile(const std::string &filename, std::deque<Process> &processes);
-int simulate(const std::deque<Process> &processes);
+int readFile(const std::string &filename, std::list<Process> &processes);
+int simulate(const std::list<Process> &processes);
 
 /**
  * Operating Systems Project 1
@@ -23,10 +23,11 @@ int main (int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    std::deque<Process> processes;
+    std::list<Process> processes;
 
-    // read the input file and populate the deque
-    readFile(argv[1], processes);
+    // read the input file and populate the list
+    if(readFile(argv[1], processes) != 0)
+        return EXIT_FAILURE;
 
     int finalTime = simulate(processes);
     std::cout << "time " << finalTime << "ms: Simulator ended" << std::endl;
@@ -35,12 +36,17 @@ int main (int argc, char* argv[]) {
 }
 
 /**
- * readFile: use the provided input filename to populate the provided deque
+ * readFile: use the provided input filename to populate the provided list
  * with Process objects
  */
-void readFile(const std::string &filename, std::deque<Process> &processes) {
-    // read the input file and populate the deque
+int readFile(const std::string &filename, std::list<Process> &processes) {
+    // read the input file and populate the list
     std::ifstream infile(filename.c_str());
+    // check the file's existence
+    if (!infile) {
+        std::cerr << "Problem opening file " << filename << std::endl;
+        return 1;
+    }
     while (infile.peek() != EOF) {
         if (infile.peek() == '#' || infile.peek() == '\n') {
             // throw away the line
@@ -63,4 +69,6 @@ void readFile(const std::string &filename, std::deque<Process> &processes) {
             processes.push_back(Process(p_num, burst_time, num_bursts, io_time));
         }
     }
+
+    return 0;
 }
