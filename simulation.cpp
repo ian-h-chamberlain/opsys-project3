@@ -49,8 +49,11 @@ int simulate(const std::list<Process> &processes) {
             while (itr->getDoneTime() > 0 && itr->getDoneTime() < curProc.getDoneTime())
                 itr++;
             execQueue.insert(itr, curProc);
-
-            continue;
+            std::cerr << "inserting " << curProc.getNum();
+            if (curProc.isIO())
+                std::cerr << "IO";
+            std::cerr << " with time " << curProc.getDoneTime() << " ";
+            printQueue(execQueue);
         }
         else if (!curProc.isIO()) {
             t = curProc.getDoneTime();
@@ -71,16 +74,31 @@ int simulate(const std::list<Process> &processes) {
 
                 std::list<Process>::iterator itr = execQueue.begin();
                 // place the process back into the queue according to its done_time
-                while (itr->getDoneTime() > 0 && itr->getDoneTime() < curProc.getDoneTime())
+                while (itr->getDoneTime() < 0 || itr->getDoneTime() < curProc.getDoneTime())
                     itr++;
                 execQueue.insert(itr, curProc);
-
+                std::cerr << "inserting " << curProc.getNum();
+                if (curProc.isIO())
+                    std::cerr << "IO";
+                std::cerr << " with time " << curProc.getDoneTime() << " ";
+                printQueue(execQueue);
             }
             else {
                 std::cout << "time " << t << "ms: P" << curProc.getNum()
                     << " terminated ";
                 printQueue(execQueue);
             }
+        }
+
+        else if (curProc.isIO()) {
+            t = curProc.getDoneTime();
+
+            curProc.toggleIO();
+            execQueue.push_back(curProc);
+
+            std::cout << "time " << t << "ms: P" << curProc.getNum()
+                << " completed I/O ";
+            printQueue(execQueue);
         }
     } 
 
