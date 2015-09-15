@@ -34,8 +34,8 @@ int simulate(const std::list<Process> &processes) {
             curProc = execQueue.front();
         }
         else {
-            ioQueue.front().runBurst(t);
-            t = ioQueue.front().getDoneTime() + t_cs;
+            t = ioQueue.front().getDoneTime() + ioQueue.front().getBurstTime();
+            curProc.runIO();
         }
 
         // check the I/O queue for any events that have occurred in the meantime
@@ -43,6 +43,7 @@ int simulate(const std::list<Process> &processes) {
         while (itr != ioQueue.end()) {
             if (itr->getDoneTime() < t) {
 
+                // temporarily hold the last process
                 Process tmp;
                 if (curProc.getNum() == execQueue.front().getNum()) {
                     tmp = execQueue.front();
@@ -62,6 +63,7 @@ int simulate(const std::list<Process> &processes) {
 
                 printQueue(execQueue);
 
+                // put the temporary process back
                 if (tmp.getNum() != -1) {
                     execQueue.push_front(tmp);
                 }
@@ -70,82 +72,80 @@ int simulate(const std::list<Process> &processes) {
                 std::cerr << "IO: ";
                 printQueue(ioQueue);
 #endif
+                continue;
             }
             else
                 itr++;
         }
 
-        if (execQueue.size() > 0) {
-            // if the process is in line for CPU and has not fired any bursts yet
-            if (curProc.getDoneTime() < 0) {
-                // add time for context switch
-                t += t_cs;
+        // if the process is in line for CPU and has not fired any bursts yet
+        if (curProc.getDoneTime() < 0) {
+            // add time for context switch
+            t += t_cs;
 
-                execQueue.pop_front();
-                // print that it is beginning 
-                std::cout << "time " << t << "ms: P" << curProc.getNum()
-                    << " started using the CPU ";
-                printQueue(execQueue);
+            execQueue.pop_front();
+            // print that it is beginning 
+            std::cout << "time " << t << "ms: P" << curProc.getNum()
+                << " started using the CPU ";
+            printQueue(execQueue);
 
-                // then add time for the process
-                t += curProc.getBurstTime();
+            // then add time for the process
+            t += curProc.getBurstTime();
 
-                // set the done time for the IO after the burst
-                curProc.runBurst(t);
+            // set the done time for the IO after the burst
+            curProc.runBurst(t);
 
-                execQueue.push_front(curProc);
+            execQueue.push_front(curProc);
 
-                // add the process to the IO queue
-                if (!curProc.isComplete()) {
-                    std::list<Process>::iterator itr = ioQueue.begin();
-                    while (itr != ioQueue.end()) {
-                        if (itr->getDoneTime() > curProc.getDoneTime()) {
-                            ioQueue.insert(itr, curProc);
-                            break;
-                        }
-                        itr++;
+            // add the process to the IO queue
+            if (!curProc.isComplete()) {
+                std::list<Process>::iterator itr = ioQueue.begin();
+                while (itr != ioQueue.end()) {
+                    if (itr->getDoneTime() > curProc.getDoneTime()) {
+                        ioQueue.insert(itr, curProc);
+                        break;
                     }
-                    if (itr == ioQueue.end())
-                        ioQueue.push_back(curProc);
+                    itr++;
                 }
+                if (itr == ioQueue.end())
+                    ioQueue.push_back(curProc);
+            }
 
 #ifdef DEBUG_MODE
-                std::cerr << "curProc = " << curProc.getNum() << " ";
+            std::cerr << "curProc = " << curProc.getNum() << " ";
+            printQueue(execQueue);
+            std::cerr << "IO: ";
+            printQueue(ioQueue);
+#endif
+        }
+        else {
+            // the process must be ending
+            execQueue.pop_front();
+            // re-add the process
+            if (!curProc.isComplete()) {
+
+                std::cout << "time " << t << "ms: P" << curProc.getNum()
+                    << " completed its CPU burst ";
+                printQueue(execQueue);
+
+                std::cout << "time " << t << "ms: P" << curProc.getNum()
+                    << " performing I/O ";
+                printQueue(execQueue);
+
+                // set the done time for IO
+
+#ifdef DEBUG_MODE
+                std::cerr << "inserting " << curProc.getNum()
+                    << " with time " << curProc.getDoneTime() << " ";
                 printQueue(execQueue);
                 std::cerr << "IO: ";
                 printQueue(ioQueue);
 #endif
-                continue;
             }
             else {
-                // the process must be ending
-                execQueue.pop_front();
-                // re-add the process
-                if (!curProc.isComplete()) {
-
-                    std::cout << "time " << t << "ms: P" << curProc.getNum()
-                        << " completed its CPU burst ";
-                    printQueue(execQueue);
-
-                    std::cout << "time " << t << "ms: P" << curProc.getNum()
-                        << " performing I/O ";
-                    printQueue(execQueue);
-
-                    // set the done time for IO
-
-#ifdef DEBUG_MODE
-                    std::cerr << "inserting " << curProc.getNum()
-                        << " with time " << curProc.getDoneTime() << " ";
-                    printQueue(execQueue);
-                    std::cerr << "IO: ";
-                    printQueue(ioQueue);
-#endif
-                }
-                else {
-                    std::cout << "time " << t << "ms: P" << curProc.getNum()
-                        << " terminated ";
-                    printQueue(execQueue);
-                }
+                std::cout << "time " << t << "ms: P" << curProc.getNum()
+                    << " terminated ";
+                printQueue(execQueue);
             }
         }
     }
