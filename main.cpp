@@ -18,16 +18,22 @@ int simulate(const std::list<Process> &processes);
  */
 int main (int argc, char* argv[]) {
 
-    if (argc != 2) {
-        std::cerr << "Usage: " << argv[0] << " processes.txt" << std::endl;
+    if (argc != 1 && argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " [processes.txt]" << std::endl;
         return EXIT_FAILURE;
     }
 
     std::list<Process> processes;
 
     // read the input file and populate the list
-    if(readFile(argv[1], processes) != 0)
-        return EXIT_FAILURE;
+    if (argc == 2) {
+        if(readFile(argv[1], processes) != 0)
+            return EXIT_FAILURE;
+    }
+    else {
+        if (readFile("processes.txt", processes) != 0)
+            return EXIT_FAILURE;
+    }
 
     int finalTime = simulate(processes);
     std::cout << "time " << finalTime << "ms: Simulator ended" << std::endl;

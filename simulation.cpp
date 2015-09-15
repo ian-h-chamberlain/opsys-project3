@@ -4,6 +4,8 @@
 
 #include "process.h"
 
+// #define DEBUG_MODE
+
 bool compareProcesses (const Process &p1, const Process &p2);
 
 void printQueue(const std::list<Process> &queueToPrint);
@@ -13,6 +15,7 @@ void printQueue(const std::list<Process> &queueToPrint);
  */
 int simulate(const std::list<Process> &processes) {
     std::list<Process> execQueue(processes);
+    std::list<Process> ioQueue;
     Process curProc;
 
     // context-switch time delay (ms)
@@ -24,83 +27,128 @@ int simulate(const std::list<Process> &processes) {
     printQueue(execQueue);
 
     // run process until we run out of processes in either queue
-    while (execQueue.size() > 0) {
+    while (execQueue.size() > 0 || ioQueue.size() > 0) {
 
-        // accept the new process
-        curProc = execQueue.front();
-        execQueue.pop_front();
-
-        // if the process is in line for CPU and has not fired any bursts yet
-        if (!curProc.isIO() && curProc.getDoneTime() < 0) {
-
-            // add time for context switch
-            t += t_cs;
-
-            // print that it is beginning 
-            std::cout << "time " << t << "ms: P" << curProc.getNum()
-                << " started using the CPU ";
-            printQueue(execQueue);
-
-            // set the done time for the burst
-            curProc.runBurst(t);
-
-            std::list<Process>::iterator itr = execQueue.begin();
-            // place the process back into the queue according to its done_time
-            while (itr->getDoneTime() > 0 && itr->getDoneTime() < curProc.getDoneTime())
-                itr++;
-            execQueue.insert(itr, curProc);
-            std::cerr << "inserting " << curProc.getNum();
-            if (curProc.isIO())
-                std::cerr << "IO";
-            std::cerr << " with time " << curProc.getDoneTime() << " ";
-            printQueue(execQueue);
+        if (execQueue.size() > 0) {
+            // accept the new process
+            curProc = execQueue.front();
         }
-        else if (!curProc.isIO()) {
-            t = curProc.getDoneTime();
-            // re-add the process
-            if (!curProc.isComplete()) {
+        else {
+            ioQueue.front().runBurst(t);
+            t = ioQueue.front().getDoneTime() + t_cs;
+        }
 
+        // check the I/O queue for any events that have occurred in the meantime
+        std::list<Process>::iterator itr = ioQueue.begin();
+        while (itr != ioQueue.end()) {
+            if (itr->getDoneTime() < t) {
+
+                Process tmp;
+                if (curProc.getNum() == execQueue.front().getNum()) {
+                    tmp = execQueue.front();
+                    execQueue.pop_front();
+                }
+                else {
+                    tmp = Process(-1, 0, 0, 0);
+                }
+
+                std::cout << "time " << itr->getDoneTime() << "ms: P" << itr->getNum()
+                    << " completed I/O ";
+
+                itr->runIO();
+
+                execQueue.push_back(*itr);
+                itr = ioQueue.erase(itr);
+
+                printQueue(execQueue);
+
+                if (tmp.getNum() != -1) {
+                    execQueue.push_front(tmp);
+                }
+
+#ifdef DEBUG_MODE
+                std::cerr << "IO: ";
+                printQueue(ioQueue);
+#endif
+            }
+            else
+                itr++;
+        }
+
+        if (execQueue.size() > 0) {
+            // if the process is in line for CPU and has not fired any bursts yet
+            if (curProc.getDoneTime() < 0) {
+                // add time for context switch
+                t += t_cs;
+
+                execQueue.pop_front();
+                // print that it is beginning 
                 std::cout << "time " << t << "ms: P" << curProc.getNum()
-                    << " completed its CPU burst ";
+                    << " started using the CPU ";
                 printQueue(execQueue);
 
-                std::cout << "time " << t << "ms: P" << curProc.getNum()
-                    << " performing I/O ";
-                printQueue(execQueue);
+                // then add time for the process
+                t += curProc.getBurstTime();
 
-                // set the done time for IO
-                curProc.toggleIO();
-                curProc.startIO(t);
+                // set the done time for the IO after the burst
+                curProc.runBurst(t);
 
-                std::list<Process>::iterator itr = execQueue.begin();
-                // place the process back into the queue according to its done_time
-                while (itr->getDoneTime() < 0 || itr->getDoneTime() < curProc.getDoneTime())
-                    itr++;
-                execQueue.insert(itr, curProc);
-                std::cerr << "inserting " << curProc.getNum();
-                if (curProc.isIO())
-                    std::cerr << "IO";
-                std::cerr << " with time " << curProc.getDoneTime() << " ";
+                execQueue.push_front(curProc);
+
+                // add the process to the IO queue
+                if (!curProc.isComplete()) {
+                    std::list<Process>::iterator itr = ioQueue.begin();
+                    while (itr != ioQueue.end()) {
+                        if (itr->getDoneTime() > curProc.getDoneTime()) {
+                            ioQueue.insert(itr, curProc);
+                            break;
+                        }
+                        itr++;
+                    }
+                    if (itr == ioQueue.end())
+                        ioQueue.push_back(curProc);
+                }
+
+#ifdef DEBUG_MODE
+                std::cerr << "curProc = " << curProc.getNum() << " ";
                 printQueue(execQueue);
+                std::cerr << "IO: ";
+                printQueue(ioQueue);
+#endif
+                continue;
             }
             else {
-                std::cout << "time " << t << "ms: P" << curProc.getNum()
-                    << " terminated ";
-                printQueue(execQueue);
+                // the process must be ending
+                execQueue.pop_front();
+                // re-add the process
+                if (!curProc.isComplete()) {
+
+                    std::cout << "time " << t << "ms: P" << curProc.getNum()
+                        << " completed its CPU burst ";
+                    printQueue(execQueue);
+
+                    std::cout << "time " << t << "ms: P" << curProc.getNum()
+                        << " performing I/O ";
+                    printQueue(execQueue);
+
+                    // set the done time for IO
+
+#ifdef DEBUG_MODE
+                    std::cerr << "inserting " << curProc.getNum()
+                        << " with time " << curProc.getDoneTime() << " ";
+                    printQueue(execQueue);
+                    std::cerr << "IO: ";
+                    printQueue(ioQueue);
+#endif
+                }
+                else {
+                    std::cout << "time " << t << "ms: P" << curProc.getNum()
+                        << " terminated ";
+                    printQueue(execQueue);
+                }
             }
         }
-
-        else if (curProc.isIO()) {
-            t = curProc.getDoneTime();
-
-            curProc.toggleIO();
-            execQueue.push_back(curProc);
-
-            std::cout << "time " << t << "ms: P" << curProc.getNum()
-                << " completed I/O ";
-            printQueue(execQueue);
-        }
-    } 
+    }
 
     // return the final time in ms
     return t;
@@ -119,10 +167,7 @@ void printQueue(const std::list<Process> &queueToPrint) {
     std::cout << "[Q";
     std::list<Process>::const_iterator itr;
     for (itr = queueToPrint.begin(); itr != queueToPrint.end(); itr++) {
-        if (!(itr->isIO()))
             std::cout << " " << itr->getNum();
-        else
-            std::cout << " " << itr->getNum() << "IO";
     }
     std::cout << "]" << std::endl;
 }

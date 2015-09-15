@@ -9,7 +9,6 @@ class Process {
     int num_bursts;
     int cur_burst;
     int io_time;
-    bool in_io;
 
 public:
     Process(int num, int b_time, int bursts, int io_time);
@@ -20,10 +19,8 @@ public:
     int getIOTime() const { return io_time; }
     int getDoneTime() const { return done_time; }
     void runBurst(int cur_time);
-    void startIO(int cur_time);
-    void toggleIO();
+    void runIO();
     bool isComplete() const  { return cur_burst >= num_bursts; }
-    bool isIO() const { return in_io; }
 };
 
 #endif
