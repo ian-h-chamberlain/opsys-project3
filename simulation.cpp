@@ -23,6 +23,7 @@ int simulate(const std::list<Process> &processes) {
 
     // initial cpu time is zero
     int t = 0;
+    int last_t = 0;
     std::cout << "time " << t << "ms: Simulator started ";
     printQueue(execQueue);
 
@@ -33,15 +34,12 @@ int simulate(const std::list<Process> &processes) {
             // accept the new process
             curProc = execQueue.front();
         }
-        else {
-            t = ioQueue.front().getDoneTime() + ioQueue.front().getBurstTime();
-            curProc.runIO();
-        }
 
         // check the I/O queue for any events that have occurred in the meantime
         std::list<Process>::iterator itr = ioQueue.begin();
         while (itr != ioQueue.end()) {
-            if (itr->getDoneTime() < t) {
+            if ((itr->getDoneTime() > 0 && itr->getDoneTime() < t)
+                    || execQueue.size() <= 0) {
 
                 // temporarily hold the last process
                 Process tmp;
@@ -56,23 +54,36 @@ int simulate(const std::list<Process> &processes) {
                 std::cout << "time " << itr->getDoneTime() << "ms: P" << itr->getNum()
                     << " completed I/O ";
 
+                if (execQueue.size() <= 0) {
+                    last_t = t;
+                    t = itr->getDoneTime();
+                }
+
                 itr->runIO();
 
                 execQueue.push_back(*itr);
                 itr = ioQueue.erase(itr);
 
                 printQueue(execQueue);
+#ifdef DEBUG_MODE
+                std::cerr << "t reset to " << t << std::endl;
+#endif
+
 
                 // put the temporary process back
                 if (tmp.getNum() != -1) {
                     execQueue.push_front(tmp);
                 }
 
+                curProc = execQueue.front();
+
+
 #ifdef DEBUG_MODE
                 std::cerr << "IO: ";
                 printQueue(ioQueue);
+                std::cerr << "P" << execQueue.back().getNum() << ": " << execQueue.back().getDoneTime();
+                std::cerr << std::endl;
 #endif
-                continue;
             }
             else
                 itr++;
@@ -105,11 +116,20 @@ int simulate(const std::list<Process> &processes) {
                         ioQueue.insert(itr, curProc);
                         break;
                     }
+                    // check for ties and break them using getNum()
+                    else if (itr->getDoneTime() == curProc.getDoneTime()) {
+                        if (itr->getNum() > curProc.getNum()) {
+                            ioQueue.insert(itr, curProc);
+                            break;
+                        }
+                    }
                     itr++;
                 }
                 if (itr == ioQueue.end())
                     ioQueue.push_back(curProc);
             }
+
+            last_t = t;
 
 #ifdef DEBUG_MODE
             std::cerr << "curProc = " << curProc.getNum() << " ";
@@ -119,10 +139,20 @@ int simulate(const std::list<Process> &processes) {
 #endif
         }
         else {
+            // reset t to the last t if necessary
+            if (t != last_t)
+                t = last_t;
+
             // the process must be ending
             execQueue.pop_front();
+
+#ifdef DEBUG_MODE
+                std::cerr << "P" << curProc.getNum() << ": ";
+                std::cerr << curProc.getBurstTime() << std::endl;
+#endif
             // re-add the process
             if (!curProc.isComplete()) {
+
 
                 std::cout << "time " << t << "ms: P" << curProc.getNum()
                     << " completed its CPU burst ";
