@@ -4,27 +4,32 @@
 
 #include "process.h"
 
-// #define DEBUG_MODE
+// use -D DEBUG_MODE when compiling to generate verbose output for debugging purposes
 
-bool compareProcesses (const Process &p1, const Process &p2);
-
+/**
+ *  printQueue(std::list<Process>) - Prints the queue given, in the format [Q 1 2 ... ]
+ */
 void printQueue(const std::list<Process> &queueToPrint);
 
 /**
- * simulate: Simulate processes based on the queue passed in
+ * simulate(std::list<Process>) - Simulate processes based on the queue passed in
  */
-int simulate(const std::list<Process> &processes) {
-    std::list<Process> execQueue(processes);
-    std::list<Process> ioQueue;
+int simulateFCFS(const std::list<Process> &processes) {
+    std::list<Process> execQueue(processes);    // the execution queue
+    std::list<Process> ioQueue; // a container for the processes in I/O
     Process curProc;
 
     // context-switch time delay (ms)
     int t_cs = 13;
 
+    // n = the number of processes can simply be found using processes.size()
+    // so creating another variable for it was extraneous
+
     // initial cpu time is zero
     int t = 0;
-    int last_t = 0;
-    std::cout << "time " << t << "ms: Simulator started ";
+    int last_t = 0;     // this stores the previous time so we can go back to it
+
+    std::cout << "time " << t << "ms: Simulator started for FCFS";
     printQueue(execQueue);
 
     // run process until we run out of processes in either queue
@@ -47,6 +52,7 @@ int simulate(const std::list<Process> &processes) {
                     tmp = execQueue.front();
                     execQueue.pop_front();
                 }
+                // make an empty process if needed
                 else {
                     tmp = Process(-1, 0, 0, 0);
                 }
@@ -54,29 +60,31 @@ int simulate(const std::list<Process> &processes) {
                 std::cout << "time " << itr->getDoneTime() << "ms: P" << itr->getNum()
                     << " completed I/O ";
 
+                // if the queue is empty, use the time from this ioQueue process
                 if (execQueue.size() <= 0) {
                     last_t = t;
                     t = itr->getDoneTime();
+#ifdef DEBUG_MODE
+                    std::cerr << "t reset to " << t << std::endl;
+#endif
                 }
 
+                // do IO work
                 itr->runIO();
 
+                // and re-add the process to the execution queue
                 execQueue.push_back(*itr);
                 itr = ioQueue.erase(itr);
 
                 printQueue(execQueue);
-#ifdef DEBUG_MODE
-                std::cerr << "t reset to " << t << std::endl;
-#endif
 
-
-                // put the temporary process back
+                // put the temporary process back if it existed originally
                 if (tmp.getNum() != -1) {
                     execQueue.push_front(tmp);
                 }
 
+                // set the current process again
                 curProc = execQueue.front();
-
 
 #ifdef DEBUG_MODE
                 std::cerr << "IO: ";
@@ -85,16 +93,20 @@ int simulate(const std::list<Process> &processes) {
                 std::cerr << std::endl;
 #endif
             }
-            else
+            // keep moving through the IO queue
+            else {
                 itr++;
+            }
         }
 
-        // if the process is in line for CPU and has not fired any bursts yet
+        // if the current process is in line for CPU and has not fired any bursts yet
         if (curProc.getDoneTime() < 0) {
             // add time for context switch
             t += t_cs;
 
+            // remove it from the queue
             execQueue.pop_front();
+
             // print that it is beginning 
             std::cout << "time " << t << "ms: P" << curProc.getNum()
                 << " started using the CPU ";
@@ -129,6 +141,7 @@ int simulate(const std::list<Process> &processes) {
                     ioQueue.push_back(curProc);
             }
 
+            // update last_t
             last_t = t;
 
 #ifdef DEBUG_MODE
@@ -143,16 +156,15 @@ int simulate(const std::list<Process> &processes) {
             if (t != last_t)
                 t = last_t;
 
-            // the process must be ending
+            // the process must be ending, so remove it from the queue
             execQueue.pop_front();
 
 #ifdef DEBUG_MODE
                 std::cerr << "P" << curProc.getNum() << ": ";
                 std::cerr << curProc.getBurstTime() << std::endl;
 #endif
-            // re-add the process
+            // print the message for the process completing a burst and entering I/O
             if (!curProc.isComplete()) {
-
 
                 std::cout << "time " << t << "ms: P" << curProc.getNum()
                     << " completed its CPU burst ";
@@ -161,17 +173,8 @@ int simulate(const std::list<Process> &processes) {
                 std::cout << "time " << t << "ms: P" << curProc.getNum()
                     << " performing I/O ";
                 printQueue(execQueue);
-
-                // set the done time for IO
-
-#ifdef DEBUG_MODE
-                std::cerr << "inserting " << curProc.getNum()
-                    << " with time " << curProc.getDoneTime() << " ";
-                printQueue(execQueue);
-                std::cerr << "IO: ";
-                printQueue(ioQueue);
-#endif
             }
+            // or terminate the process if it's on its last burst
             else {
                 std::cout << "time " << t << "ms: P" << curProc.getNum()
                     << " terminated ";
@@ -185,7 +188,7 @@ int simulate(const std::list<Process> &processes) {
 }
 
 /**
- *  printQueue: a helper function to print the process queue
+ *  printQueue(std::list<Process>) a helper function to print the process queue
  */
 void printQueue(const std::list<Process> &queueToPrint) {
     // if we have size zero, then just print "[Q]"
