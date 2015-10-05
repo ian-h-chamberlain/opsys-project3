@@ -11,10 +11,8 @@ void printQueue(const std::list<Process> &queueToPrint);
 
 int simulatePWA(const std::list<Process> &processes, int t_cs) {
 
-    auto comparator = [](Process p1, Process p2) { return p1.getBurstTime() > p2.getBurstTime(); };
-
-    std::priority_queue<Process, std::vector<Process>, decltype(comparator) >
-        execQueue(processes);    // the execution queue
+    /*
+    std::priority_queue<Process> execQueue(processes);    // the execution queue
     std::list<Process> ioQueue; // a container for the processes in I/O
 
     // get the first process
@@ -37,6 +35,9 @@ int simulatePWA(const std::list<Process> &processes, int t_cs) {
             continue;
         }
     }
+    */
+
+    return 0;
     
 }
 

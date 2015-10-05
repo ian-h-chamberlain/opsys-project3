@@ -8,9 +8,9 @@
 #include "process.h"
 
 int readFile(const std::string &filename, std::list<Process> &processes);
-int simulateFCFS(const std::list<Process> &processes);
-int simulateSRT(const std::list<Process> &processes);
-int simulatePWA(const std::list<Process> &processes);
+int simulateFCFS(const std::list<Process> &processes, int t_cs);
+int simulateSRT(const std::list<Process> &processes, int t_cs);
+int simulatePWA(const std::list<Process> &processes, int t_cs);
 
 /**
  * Operating Systems Project 1

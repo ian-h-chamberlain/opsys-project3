@@ -1,24 +1,25 @@
 #include <list>
 #include <iostream>
 #include <algorithm>
+#include <set>
 
 #include "process.h"
 
 // use -D DEBUG_MODE when compiling to generate verbose output for debugging purposes
 
+typedef std::set<Process, CompareProcess> procQueue;
+
+void printQueue(const procQueue &queueToPrint);
 void printQueue(const std::list<Process> &queueToPrint);
 
 int simulateSRT(const std::list<Process> &processes, int t_cs) {
 
-    auto comparator = [](Process p1, Process p2) { return p1.getBurstTime() > p2.getBurstTime(); };
-
-    std::priority_queue<Process, std::vector<Process>, decltype(comparator) >
-        execQueue(processes);    // the execution queue
+    procQueue execQueue(processes.begin(), processes.end(), CompareProcess());    // the execution queue
     std::list<Process> ioQueue; // a container for the processes in I/O
 
     // get the first process
-    Process curProc = execQueue.front();
-    execQueue.pop_front();
+    Process curProc = *(execQueue.begin());
+    execQueue.erase(execQueue.begin());
 
     int t = 0;
 
@@ -37,8 +38,8 @@ int simulateSRT(const std::list<Process> &processes, int t_cs) {
             }
             else if (curProc.getDoneTime() >= t) {
                 ioQueue.push_back(curProc);
-                curProc = execQueue.front();
-                execQueue.pop_front();
+                curProc = *(execQueue.begin());
+                execQueue.erase(execQueue.begin());
             }
             t++;
             continue;
@@ -47,4 +48,23 @@ int simulateSRT(const std::list<Process> &processes, int t_cs) {
 
     return t;
 
+}
+
+/**
+ * printQueue() - print a priority queue
+ */
+
+void printQueue(const procQueue &queueToPrint) {
+    // if we have size zero, then just print "[Q]"
+    if (queueToPrint.size() == 0) {
+        std::cout << "[Q]" << std::endl;
+        return;
+    }
+    // print "[Q 1 2 ... ]"
+    std::cout << "[Q";
+    procQueue::const_iterator itr;
+    for (itr = queueToPrint.begin(); itr != queueToPrint.end(); itr++) {
+            std::cout << " " << itr->getNum();
+    }
+    std::cout << "]" << std::endl;
 }

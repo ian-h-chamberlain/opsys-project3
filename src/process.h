@@ -29,4 +29,11 @@ public:
     bool isComplete() const  { return cur_burst >= num_bursts; }
 };
 
+class CompareProcess {
+public:
+    bool operator() (Process p1, Process p2) {
+        return p1.getBurstTime() < p2.getBurstTime();
+    }
+};
+
 #endif
