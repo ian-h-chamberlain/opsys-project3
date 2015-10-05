@@ -31,7 +31,7 @@ void Process::runBurst(int cur_time) {
         done_time = cur_time + io_time;
     }
     else {
-        std::cerr << "Attempt to run burst after process is already complete!" << std::endl;
+        std::cerr << std::endl << "Attempt to run burst after process is already complete!" << std::endl;
     }
 }
 /**

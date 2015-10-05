@@ -17,33 +17,83 @@ int simulateSRT(const std::list<Process> &processes, int t_cs) {
     procQueue execQueue(processes.begin(), processes.end(), CompareProcess());    // the execution queue
     std::list<Process> ioQueue; // a container for the processes in I/O
 
+    int t = 0;
+    int curProcTime = 0;
+
+    // do our output
+    std::cout << "time " << t << "ms: Simulator started for SRT ";
+    printQueue(execQueue);
+
     // get the first process
     Process curProc = *(execQueue.begin());
     execQueue.erase(execQueue.begin());
 
-    int t = 0;
-
-    std::cout << "time " << t << "ms: Simulator started for SRT ";
-    printQueue(execQueue);
-
+    // now run the processes
     while (execQueue.size() > 0 || ioQueue.size() > 0) {
-        if (execQueue.size() > 0) {
-            if (curProc.getDoneTime() - curProc.getBurstTime() == t) {
-                std::cout << "time " << t << "ms: P" << curProc.getNum()
-                    << " started using the CPU ";
+
+        std::list<Process>::iterator itr;
+        // check for completed IO processes
+        for (itr = ioQueue.begin(); itr != ioQueue.end(); itr++) {
+            if (t == itr->getDoneTime()) {
+                std::cout << "time " << itr->getDoneTime() << "ms: P" << itr->getNum()
+                    << " completed I/O ";
+
+                // preempt the process if the remaining time is too long
+                if (curProcTime != 0) {
+                    if (curProc.getBurstTime() - (t - curProcTime) < itr->getBurstTime()) {
+                        execQueue.insert(curProc);
+                        curProc = *itr;
+                        curProcTime = t + t_cs;
+                        itr = ioQueue.erase(itr);
+                        printQueue(execQueue);
+                        continue;
+                    }
+                }
+
+                // TODO: fix preemption and account for partially completed bursts
+
+                execQueue.insert(*itr);
+                itr = ioQueue.erase(itr);
+
                 printQueue(execQueue);
             }
-            else if (curProc.getDoneTime() < 0) {
-                curProc.runBurst(t + t_cs);
+        }
+
+        if (execQueue.size() > 0) {
+            if (curProcTime == 0) {
+                curProcTime = t + t_cs;
             }
-            else if (curProc.getDoneTime() >= t) {
-                ioQueue.push_back(curProc);
+            else if (t == curProcTime) {
+                std::cout << "time " << t << "ms: P" << curProc.getNum()
+                    << " started using the CPU ";
+                curProc.runBurst(t + curProc.getBurstTime());
+                printQueue(execQueue);
+            }
+            else if (t >= curProcTime + curProc.getBurstTime()) {
+                if (curProc.isComplete()) {
+                    std::cout << "time " << t << "ms: P" << curProc.getNum()
+                        << " terminated ";
+                    printQueue(execQueue);
+                }
+                else {
+                    std::cout << "time " << t << "ms: P" << curProc.getNum()
+                        << " completed its CPU burst ";
+                    printQueue(execQueue);
+
+                    std::cout << "time " << t << "ms: P" << curProc.getNum()
+                        << " performing I/O ";
+                    printQueue(execQueue);
+
+                    ioQueue.push_back(curProc);
+                }
+
+                curProcTime = 0;
                 curProc = *(execQueue.begin());
                 execQueue.erase(execQueue.begin());
+                continue;
             }
-            t++;
-            continue;
         }
+        t++;
     }
 
     return t;
