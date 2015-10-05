@@ -38,24 +38,27 @@ int simulateSRT(const std::list<Process> &processes, int t_cs) {
                 std::cout << "time " << itr->getDoneTime() << "ms: P" << itr->getNum()
                     << " completed I/O ";
 
+                execQueue.insert(*itr);
+                itr = ioQueue.erase(itr);
+                printQueue(execQueue);
+
                 // preempt the process if the remaining time is too long
                 if (curProcTime != 0) {
                     if (curProc.getBurstTime() - (t - curProcTime) < itr->getBurstTime()) {
+                        /*
                         execQueue.insert(curProc);
                         curProc = *itr;
                         curProcTime = t + t_cs;
                         itr = ioQueue.erase(itr);
+                        std::cout << "time " << itr->getDoneTime() << "ms: P" << itr->getNum()
+                            << " completed I/O ";
                         printQueue(execQueue);
-                        continue;
+                        */
                     }
                 }
 
                 // TODO: fix preemption and account for partially completed bursts
 
-                execQueue.insert(*itr);
-                itr = ioQueue.erase(itr);
-
-                printQueue(execQueue);
             }
         }
 
