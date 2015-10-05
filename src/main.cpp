@@ -38,18 +38,23 @@ int main (int argc, char* argv[]) {
     }
 
     int t_cs = 13;
+    int finalTime;
 
+#ifndef DEBUG_MODE
     // get the final time in ms and display that the simulator endd
-    int finalTime = simulateFCFS(processes, t_cs);
+    finalTime = simulateFCFS(processes, t_cs);
     std::cout << "time " << finalTime << "ms: Simulator for FCFS ended" << std::endl << std::endl;
+#endif
 
     // do the same for SRT
     finalTime = simulateSRT(processes, t_cs);
     std::cout << "time " << finalTime << "ms: Simulator for SRT ended" << std::endl << std::endl;
 
+#ifndef DEBUG_MODE
     // and PWA
     finalTime = simulatePWA(processes, t_cs);
     std::cout << "time " << finalTime << "ms: Simulator for PWA ended" << std::endl;
+#endif
 
     return EXIT_SUCCESS;
 }

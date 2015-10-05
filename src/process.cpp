@@ -10,6 +10,7 @@ Process::Process(int num, int b_time, int bursts, int io_time, int priority) {
     this->num_bursts = bursts;
     this->io_time = io_time;
     this->priority = priority;
+    remain_time = burst_time;
     done_time = -1;
     cur_burst = 0;
 }
@@ -29,14 +30,17 @@ void Process::runBurst(int cur_time) {
     if (cur_burst < num_bursts) {
         cur_burst++;
         done_time = cur_time + io_time;
+        remain_time = 0;
     }
     else {
         std::cerr << std::endl << "Attempt to run burst after process is already complete!" << std::endl;
     }
 }
+
 /**
  * runIO() - resets done_time to indicate that the process is no longer in the IO queue
  */
 void Process::runIO() {
     done_time = -1;
+    remain_time = burst_time;
 }

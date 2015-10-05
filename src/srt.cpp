@@ -31,48 +31,56 @@ int simulateSRT(const std::list<Process> &processes, int t_cs) {
     // now run the processes
     while (execQueue.size() > 0 || ioQueue.size() > 0) {
 
-        std::list<Process>::iterator itr;
+        std::list<Process>::iterator itr = ioQueue.begin();
         // check for completed IO processes
-        for (itr = ioQueue.begin(); itr != ioQueue.end(); itr++) {
+        while (itr != ioQueue.end()) {
             if (t == itr->getDoneTime()) {
-                std::cout << "time " << itr->getDoneTime() << "ms: P" << itr->getNum()
+                std::cout << "time " << t << "ms: P" << itr->getNum()
                     << " completed I/O ";
 
-                execQueue.insert(*itr);
-                itr = ioQueue.erase(itr);
-                printQueue(execQueue);
+                itr->runIO();
 
                 // preempt the process if the remaining time is too long
-                if (curProcTime != 0) {
-                    if (curProc.getBurstTime() - (t - curProcTime) < itr->getBurstTime()) {
-                        /*
-                        execQueue.insert(curProc);
-                        curProc = *itr;
-                        curProcTime = t + t_cs;
-                        itr = ioQueue.erase(itr);
-                        std::cout << "time " << itr->getDoneTime() << "ms: P" << itr->getNum()
-                            << " completed I/O ";
-                        printQueue(execQueue);
-                        */
-                    }
+                if (curProc.getRemainingTime() > itr->getBurstTime()) {
+                    execQueue.insert(curProc);
+                    printQueue(execQueue);
+                    std::cout << "time " << t << "ms: P" << curProc.getNum() 
+                        << " preempted by P" << itr->getNum() << " ";
+                    curProc = *itr;
+                    curProcTime = t + t_cs;
+                    printQueue(execQueue);
                 }
+                else {
+                    printQueue(execQueue);
+                    execQueue.insert(*itr);
+                }
+
+                itr = ioQueue.erase(itr);
 
                 // TODO: fix preemption and account for partially completed bursts
 
             }
+            else {
+                itr++;
+            }
         }
 
-        if (execQueue.size() > 0) {
-            if (curProcTime == 0) {
+        if (execQueue.size() >= 0) {
+            // prepare for the next process to start after a context switch
+            if (curProcTime <= 0) {
                 curProcTime = t + t_cs;
             }
+            // or start a process if necessary
             else if (t == curProcTime) {
                 std::cout << "time " << t << "ms: P" << curProc.getNum()
                     << " started using the CPU ";
-                curProc.runBurst(t + curProc.getBurstTime());
                 printQueue(execQueue);
             }
-            else if (t >= curProcTime + curProc.getBurstTime()) {
+            // and finish a process if it's done
+            else if (curProc.getRemainingTime() <= 0) {
+
+                curProc.runBurst(t);
+
                 if (curProc.isComplete()) {
                     std::cout << "time " << t << "ms: P" << curProc.getNum()
                         << " terminated ";
@@ -91,12 +99,34 @@ int simulateSRT(const std::list<Process> &processes, int t_cs) {
                 }
 
                 curProcTime = 0;
-                curProc = *(execQueue.begin());
-                execQueue.erase(execQueue.begin());
+                if (execQueue.size() > 0) {
+                    curProc = *(execQueue.begin());
+                    execQueue.erase(execQueue.begin());
+                }
+                else {
+                    // skip ahead to the next I/O completion
+                    std::list<Process>::iterator itr;
+                    int min_time = -1;
+                    for (itr = ioQueue.begin(); itr != ioQueue.end(); itr++) {
+                        if (min_time < 0 || itr->getDoneTime() < min_time)
+                            min_time = itr->getDoneTime();
+                    }
+                    t = max_time;
+                }
+
+#ifdef DEBUG_MODE
+                printQueue(ioQueue);
+                std::cout << "P" << curProc.getNum() << std::endl;
+                std::cout << "  remain: " << curProc.getRemainingTime() << std::endl;
+                std::cout << "  t = " << t << std::endl;
+#endif
                 continue;
             }
         }
         t++;
+        if (t > curProcTime && !curProc.isComplete()) {
+            curProc.runForMs(1);
+        }
     }
 
     return t;
