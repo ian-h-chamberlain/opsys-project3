@@ -14,7 +14,7 @@ class Process {
     int priority;
 
 public:
-    Process(int num, int b_time, int bursts, int io_time);
+    Process(int num, int b_time, int bursts, int io_time, int priority);
     Process();
     int getNum() const { return proc_num; }
     int getBurstTime() const { return burst_time; }
@@ -22,7 +22,8 @@ public:
     int getIOTime() const { return io_time; }
     int getDoneTime() const { return done_time; }
     int getPriority() const { return priority; }
-    int setPriority(int p) { priority = p; }
+    void preemptByMs(int t) { done_time += t; }
+    void setPriority(int p) { priority = p; }
     void runBurst(int cur_time);
     void runIO();
     bool isComplete() const  { return cur_burst >= num_bursts; }

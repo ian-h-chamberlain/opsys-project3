@@ -14,13 +14,10 @@ void printQueue(const std::list<Process> &queueToPrint);
 /**
  * simulate(std::list<Process>) - Simulate processes based on the queue passed in
  */
-int simulateFCFS(const std::list<Process> &processes) {
+int simulateFCFS(const std::list<Process> &processes, int t_cs) {
     std::list<Process> execQueue(processes);    // the execution queue
     std::list<Process> ioQueue; // a container for the processes in I/O
     Process curProc;
-
-    // context-switch time delay (ms)
-    int t_cs = 13;
 
     // n = the number of processes can simply be found using processes.size()
     // so creating another variable for it was extraneous
@@ -29,7 +26,7 @@ int simulateFCFS(const std::list<Process> &processes) {
     int t = 0;
     int last_t = 0;     // this stores the previous time so we can go back to it
 
-    std::cout << "time " << t << "ms: Simulator started for FCFS";
+    std::cout << "time " << t << "ms: Simulator started for FCFS ";
     printQueue(execQueue);
 
     // run process until we run out of processes in either queue
@@ -54,7 +51,7 @@ int simulateFCFS(const std::list<Process> &processes) {
                 }
                 // make an empty process if needed
                 else {
-                    tmp = Process(-1, 0, 0, 0);
+                    tmp = Process(-1, 0, 0, 0, 0);
                 }
 
                 std::cout << "time " << itr->getDoneTime() << "ms: P" << itr->getNum()

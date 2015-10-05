@@ -37,17 +37,19 @@ int main (int argc, char* argv[]) {
             return EXIT_FAILURE;
     }
 
+    int t_cs = 13;
+
     // get the final time in ms and display that the simulator endd
-    int finalTime = simulateFCFS(processes);
-    std::cout << "time " << finalTime << "ms: Simulator for FCFS ended" << std::endl;
+    int finalTime = simulateFCFS(processes, t_cs);
+    std::cout << "time " << finalTime << "ms: Simulator for FCFS ended" << std::endl << std::endl;
 
     // do the same for SRT
-    int finalTime = simulateFCFS(processes);
-    std::cout << "time " << finalTime << "ms: Simulator for FCFS ended" << std::endl;
+    finalTime = simulateSRT(processes, t_cs);
+    std::cout << "time " << finalTime << "ms: Simulator for SRT ended" << std::endl << std::endl;
 
     // and PWA
-    int finalTime = simulateFCFS(processes);
-    std::cout << "time " << finalTime << "ms: Simulator for FCFS ended" << std::endl;
+    finalTime = simulatePWA(processes, t_cs);
+    std::cout << "time " << finalTime << "ms: Simulator for PWA ended" << std::endl;
 
     return EXIT_SUCCESS;
 }
@@ -84,7 +86,7 @@ int readFile(const std::string &filename, std::list<Process> &processes) {
             std::getline(infile, tmp, '|');
             int io_time = atoi(tmp.c_str());
             std::getline(infile, tmp);
-            int priority = atoir(tmp.c_str());
+            int priority = atoi(tmp.c_str());
 
             // add the process to the list of processes
             processes.push_back(Process(p_num, burst_time, num_bursts, io_time, priority));
