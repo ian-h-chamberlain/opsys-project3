@@ -20,6 +20,7 @@ public:
     int getNum() const { return proc_num; }
     int getBurstTime() const { return burst_time; }
     int getNumBursts() const { return num_bursts; }
+    int getCurBurst() const { return cur_burst; }
     int getIOTime() const { return io_time; }
     int getDoneTime() const { return done_time; }
     int getPriority() const { return priority; }
