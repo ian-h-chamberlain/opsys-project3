@@ -48,25 +48,6 @@ int simulatePWA(const std::list<Process> &processes, std::ofstream &outfile, int
     // now run the processes
     while (execQueue.size() > 0 || ioQueue.size() > 0 || curProcTime > 0) {
 
-        // age some priorities
-        proc_itr = execQueue.begin();
-        while (proc_itr != execQueue.end()) {
-            if (proc_itr->getWaitTime() > 3 * proc_itr->getBurstTime()) {
-                Process tmp(*proc_itr);
-                procQueue::iterator tmp_itr = proc_itr;
-                if (tmp.getPriority() > 0)
-                    tmp.setPriority(tmp.getPriority() - 1);
-
-                tmp_itr++;
-                execQueue.erase(proc_itr);
-                execQueue.insert(tmp);
-                proc_itr = tmp_itr;
-            }
-            else {
-                proc_itr++;
-            }
-        }
-
         std::list<Process>::iterator itr = ioQueue.begin();
         // check for completed IO processes
         while (itr != ioQueue.end()) {
@@ -178,7 +159,6 @@ int simulatePWA(const std::list<Process> &processes, std::ofstream &outfile, int
                     std::cout << "time " << t << "ms: P" << curProc.getNum()
                         << " terminated ";
                     printQueue(execQueue);
-                    waitTime += curProc.getWaitTime();
                 }
                 // or start I/O if not terminated
                 else {
@@ -190,6 +170,8 @@ int simulatePWA(const std::list<Process> &processes, std::ofstream &outfile, int
                         << " performing I/O ";
                     printQueue(execQueue);
 
+                    waitTime += curProc.getWaitTime();
+                    curProc.wait(-curProc.getWaitTime());   // reset the wait time
                     // add the process to I/O
                     ioQueue.push_back(curProc);
                 }
@@ -236,6 +218,10 @@ int simulatePWA(const std::list<Process> &processes, std::ofstream &outfile, int
                 tmp_itr++;
                 execQueue.erase(proc_itr);
                 tmp.wait(1);
+                if (tmp.getWaitTime() >= 3 * tmp.getBurstTime()) {
+                    if (tmp.getPriority() > 0)
+                        tmp.setPriority(tmp.getPriority() - 1);
+                }
                 execQueue.insert(tmp);
                 proc_itr = tmp_itr;
             }
