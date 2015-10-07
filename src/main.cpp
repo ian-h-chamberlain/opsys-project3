@@ -48,15 +48,17 @@ int main (int argc, char* argv[]) {
 
     // get the final time in ms and display that the simulator endd
     finalTime = simulateFCFS(processes, outfile, t_cs);
-    std::cout << "time " << finalTime << "ms: Simulator for FCFS ended" << std::endl << std::endl;
+    std::cout << "time " << finalTime << "ms: Simulator for FCFS ended [Q]" << std::endl;
+    std::cout << std::endl << std::endl;
 
     // do the same for SRT
     finalTime = simulateSRT(processes, outfile, t_cs);
-    std::cout << "time " << finalTime << "ms: Simulator for SRT ended" << std::endl << std::endl;
+    std::cout << "time " << finalTime << "ms: Simulator for SRT ended [Q]" << std::endl;
+    std::cout << std::endl << std::endl;
 
     // and PWA
     finalTime = simulatePWA(processes, outfile, t_cs);
-    std::cout << "time " << finalTime << "ms: Simulator for PWA ended" << std::endl;
+    std::cout << "time " << finalTime << "ms: Simulator for PWA ended [Q]" << std::endl;
 
     outfile.close();
 

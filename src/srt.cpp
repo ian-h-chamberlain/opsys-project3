@@ -68,13 +68,25 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
 
                 // preempt the process if the remaining time is too long
                 if (curProc.getRemainingTime() > itr->getBurstTime()) {
+                    execQueue.erase(tmp);   // we don't need the process in the queue
                     printQueue(execQueue);
                     execQueue.insert(curProc);
-                    execQueue.erase(tmp);   // we don't need the process in the queue
                     std::cout << "time " << t << "ms: P" << curProc.getNum() 
                         << " preempted by P" << itr->getNum() << " ";
                     curProc = *itr;
                     curProcTime = t + t_cs;
+                    // calculate wait time
+                    proc_itr = execQueue.begin();
+                    while (proc_itr != execQueue.end()) {
+                        Process tmp(*proc_itr);
+                        procQueue::iterator tmp_itr(proc_itr);
+                        tmp_itr++;
+                        execQueue.erase(proc_itr);
+                        tmp.wait(t_cs);
+                        execQueue.insert(tmp);
+                        proc_itr = tmp_itr;
+                    }
+
                     contextSwitches++;
                     printQueue(execQueue);
                 }
@@ -104,6 +116,17 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
             // prepare for the next process to start after a context switch
             if (curProcTime <= 0) {
                 curProcTime = t + t_cs;
+                // calculate wait time
+                proc_itr = execQueue.begin();
+                while (proc_itr != execQueue.end()) {
+                    Process tmp(*proc_itr);
+                    procQueue::iterator tmp_itr(proc_itr);
+                    tmp_itr++;
+                    execQueue.erase(proc_itr);
+                    tmp.wait(t_cs);
+                    execQueue.insert(tmp);
+                    proc_itr = tmp_itr;
+                }
                 contextSwitches++;
             }
             // or start a process if necessary
@@ -133,6 +156,7 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
                     std::cout << "time " << t << "ms: P" << curProc.getNum()
                         << " terminated ";
                     printQueue(execQueue);
+                    waitTime += curProc.getWaitTime();
                 }
                 // or start I/O if not terminated
                 else {
@@ -183,13 +207,27 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
         t++;
         if (t > curProcTime && !curProc.isComplete()) {
             curProc.runForMs(1);
+            procQueue::iterator proc_itr = execQueue.begin();
+            while (proc_itr != execQueue.end()) {
+                Process tmp(*proc_itr);
+                procQueue::iterator tmp_itr(proc_itr);
+                tmp_itr++;
+                execQueue.erase(proc_itr);
+                tmp.wait(1);
+                execQueue.insert(tmp);
+                proc_itr = tmp_itr;
+            }
         }
     }
 
+    turnaroundTime = burstTime + waitTime;
+
     burstTime /= numBursts;
+    waitTime /= numBursts;
+    turnaroundTime /= numBursts;
     outfile << "-- average CPU burst time: " << std::setprecision(5) << burstTime << std::endl;;
-    outfile << "-- average wait time: " << std::setprecision(5) << waitTime << std::endl;
-    outfile << "-- average turnaround time: " << std::setprecision(5) << turnaroundTime << std::endl;
+    outfile << "-- average wait time: " << std::fixed << std::setprecision(2) << waitTime << std::endl;
+    outfile << "-- average turnaround time: " << std::setprecision(2) << turnaroundTime << std::endl;
     outfile << "-- total number of context switches: " << contextSwitches << std::endl;
 
     return t;
