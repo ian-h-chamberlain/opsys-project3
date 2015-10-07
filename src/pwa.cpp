@@ -82,12 +82,14 @@ int simulatePWA(const std::list<Process> &processes, std::ofstream &outfile, int
                 itr->runIO();
 #ifdef DEBUG_MODE
                 std::cout << std::endl << "  remain " << itr->getRemainingTime() << std::endl;
+                std::cout << "  priority " << itr->getPriority() << std::endl;
                 std::cout << "curproc " << curProc.getNum() << std::endl;
                 std::cout << "  remain " << curProc.getRemainingTime() << std::endl;
+                std::cout << "  priority " << curProc.getPriority() << std::endl;
 #endif
 
                 // preempt the process if the remaining time is too long
-                if (curProc.getRemainingTime() > itr->getBurstTime()) {
+                if (curProc.getPriority() > itr->getPriority()) {
                     printQueue(execQueue);
                     execQueue.insert(curProc);
                     execQueue.erase(tmp);   // we don't need the process in the queue
