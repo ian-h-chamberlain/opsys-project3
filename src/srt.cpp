@@ -2,6 +2,8 @@
 #include <iostream>
 #include <algorithm>
 #include <set>
+#include <fstream>
+#include <iomanip>
 
 #include "process.h"
 
@@ -12,13 +14,27 @@ typedef std::set<Process, CompareProcess> procQueue;
 void printQueue(const procQueue &queueToPrint);
 void printQueue(const std::list<Process> &queueToPrint);
 
-int simulateSRT(const std::list<Process> &processes, int t_cs) {
+int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int t_cs) {
 
     procQueue execQueue(processes.begin(), processes.end(), CompareProcess());    // the execution queue
     std::list<Process> ioQueue; // a container for the processes in I/O
 
     int t = 0;
     int curProcTime = 0;
+
+    double burstTime = 0.0;
+    double waitTime = 0.0;
+    double turnaroundTime = 0.0;
+    int numBursts = 0;
+    int contextSwitches = 0;
+
+    outfile << "Algorithm SRT" << std::endl;
+    procQueue::iterator proc_itr = execQueue.begin();
+    while (proc_itr != execQueue.end()) {
+        burstTime += proc_itr->getBurstTime() * proc_itr->getNumBursts();
+        numBursts += proc_itr->getNumBursts();
+        proc_itr++;
+    }
 
     // do our output
     std::cout << "time " << t << "ms: Simulator started for SRT ";
@@ -59,6 +75,7 @@ int simulateSRT(const std::list<Process> &processes, int t_cs) {
                         << " preempted by P" << itr->getNum() << " ";
                     curProc = *itr;
                     curProcTime = t + t_cs;
+                    contextSwitches++;
                     printQueue(execQueue);
                 }
                 // or, if curProc is done (which only happens when the exec queue is empty)
@@ -87,6 +104,7 @@ int simulateSRT(const std::list<Process> &processes, int t_cs) {
             // prepare for the next process to start after a context switch
             if (curProcTime <= 0) {
                 curProcTime = t + t_cs;
+                contextSwitches++;
             }
             // or start a process if necessary
             else if (t == curProcTime) {
@@ -167,6 +185,12 @@ int simulateSRT(const std::list<Process> &processes, int t_cs) {
             curProc.runForMs(1);
         }
     }
+
+    burstTime /= numBursts;
+    outfile << "-- average CPU burst time: " << std::setprecision(5) << burstTime << std::endl;;
+    outfile << "-- average wait time: " << std::setprecision(5) << waitTime << std::endl;
+    outfile << "-- average turnaround time: " << std::setprecision(5) << turnaroundTime << std::endl;
+    outfile << "-- total number of context switches: " << contextSwitches << std::endl;
 
     return t;
 

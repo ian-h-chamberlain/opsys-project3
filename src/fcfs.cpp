@@ -1,6 +1,8 @@
 #include <list>
 #include <iostream>
 #include <algorithm>
+#include <fstream>
+#include <iomanip>
 
 #include "process.h"
 
@@ -14,10 +16,25 @@ void printQueue(const std::list<Process> &queueToPrint);
 /**
  * simulate(std::list<Process>) - Simulate processes based on the queue passed in
  */
-int simulateFCFS(const std::list<Process> &processes, int t_cs) {
+int simulateFCFS(const std::list<Process> &processes, std::ofstream &outfile, int t_cs) {
     std::list<Process> execQueue(processes);    // the execution queue
     std::list<Process> ioQueue; // a container for the processes in I/O
     Process curProc;
+
+    int contextSwitches = 0;
+    double burstTime = 0.0;
+    double waitTime = 0.0;
+    double turnaroundTime = 0.0;
+    int numBursts = 0;
+
+    outfile << "Algorithm FCFS" << std::endl;
+    outfile << "-- average CPU burst time: ";
+    std::list<Process>::iterator itr = execQueue.begin();
+    while (itr != execQueue.end()) {
+        burstTime += itr->getBurstTime() * itr->getNumBursts();
+        numBursts += itr->getNumBursts();
+        itr++;
+    }
 
     // n = the number of processes can simply be found using processes.size()
     // so creating another variable for it was extraneous
@@ -60,12 +77,15 @@ int simulateFCFS(const std::list<Process> &processes, int t_cs) {
                 // if the queue is empty, use the time from this ioQueue process
                 if (execQueue.size() <= 0) {
                     last_t = t;
+
                     t = itr->getDoneTime();
+                    
+
 #ifdef DEBUG_MODE
                     std::cerr << "t reset to " << t << std::endl;
 #endif
                 }
-
+                
                 // do IO work
                 itr->runIO();
 
@@ -100,6 +120,7 @@ int simulateFCFS(const std::list<Process> &processes, int t_cs) {
         if (curProc.getDoneTime() < 0) {
             // add time for context switch
             t += t_cs;
+            contextSwitches++;
 
             // remove it from the queue
             execQueue.pop_front();
@@ -150,16 +171,24 @@ int simulateFCFS(const std::list<Process> &processes, int t_cs) {
         }
         else {
             // reset t to the last t if necessary
-            if (t != last_t)
+            if (t != last_t) {
                 t = last_t;
+            }
 
             // the process must be ending, so remove it from the queue
             execQueue.pop_front();
 
 #ifdef DEBUG_MODE
-                std::cerr << "P" << curProc.getNum() << ": ";
-                std::cerr << curProc.getBurstTime() << std::endl;
+            std::cerr << "P" << curProc.getNum() << ": ";
+            std::cerr << curProc.getBurstTime() << std::endl;
 #endif
+            std::list<Process>::iterator proc_itr = execQueue.begin();
+            while (proc_itr != execQueue.end()) {
+                proc_itr->wait(curProc.getBurstTime());
+                proc_itr++;
+            }
+
+
             // print the message for the process completing a burst and entering I/O
             if (!curProc.isComplete()) {
 
@@ -176,9 +205,21 @@ int simulateFCFS(const std::list<Process> &processes, int t_cs) {
                 std::cout << "time " << t << "ms: P" << curProc.getNum()
                     << " terminated ";
                 printQueue(execQueue);
+
+                waitTime += curProc.getWaitTime();
             }
         }
     }
+
+    turnaroundTime = burstTime + waitTime;
+
+    burstTime /= numBursts;
+    waitTime /= numBursts;
+    turnaroundTime /= numBursts;
+    outfile << std::setprecision(5) << burstTime << std::endl;
+    outfile << "-- average wait time: " << std::setprecision(5) << waitTime << std::endl;
+    outfile << "-- average turnaround time: " << std::setprecision(5) << turnaroundTime << std::endl;
+    outfile << "-- total number of context switches: " << contextSwitches << std::endl;
 
     // return the final time in ms
     return t;

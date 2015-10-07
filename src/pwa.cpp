@@ -2,6 +2,7 @@
 #include <queue>
 #include <iostream>
 #include <algorithm>
+#include <fstream>
 
 #include "process.h"
 
@@ -9,7 +10,7 @@
 
 void printQueue(const std::list<Process> &queueToPrint);
 
-int simulatePWA(const std::list<Process> &processes, int t_cs) {
+int simulatePWA(const std::list<Process> &processes, std::ofstream &outfile, int t_cs) {
 
     /*
     std::priority_queue<Process> execQueue(processes);    // the execution queue

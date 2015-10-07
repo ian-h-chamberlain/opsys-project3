@@ -13,6 +13,7 @@ class Process {
     int io_time;
     int priority;
     int remain_time;
+    int wait_time;
 
 public:
     Process(int num, int b_time, int bursts, int io_time, int priority);
@@ -25,10 +26,12 @@ public:
     int getDoneTime() const { return done_time; }
     int getPriority() const { return priority; }
     int getRemainingTime() const { return remain_time; }
+    int getWaitTime() const { return wait_time; }
     void runForMs(int t) { remain_time -= t; }
     void setPriority(int p) { priority = p; }
     void runBurst(int cur_time);
     void runIO();
+    void wait(int t) { wait_time += t; }
     bool isComplete() const  { return cur_burst >= num_bursts; }
 };
 
@@ -36,6 +39,21 @@ class CompareProcess {
 public:
     bool operator() (Process p1, Process p2) {
         return p1.getBurstTime() < p2.getBurstTime();
+    }
+};
+
+class ComparePriority {
+public:
+    bool operator() (Process p1, Process p2) {
+        if (p1.getPriority() < p2.getPriority()) {
+            return true;
+        }
+        else if (p1.getPriority() == p2.getPriority()) {
+            return p1.getNum() < p2.getNum();
+        }
+        else {
+            return false;
+        }
     }
 };
 

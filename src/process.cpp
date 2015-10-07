@@ -11,6 +11,7 @@ Process::Process(int num, int b_time, int bursts, int io_time, int priority) {
     this->io_time = io_time;
     this->priority = priority;
     remain_time = burst_time;
+    wait_time = 0;
     done_time = -1;
     cur_burst = 0;
 }
