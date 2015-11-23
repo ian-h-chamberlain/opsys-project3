@@ -8,9 +8,7 @@
 #include "process.h"
 
 int readFile(const std::string &filename, std::list<Process> &processes);
-int simulateFCFS(const std::list<Process> &processes, std::ofstream &outfile, int t_cs);
-int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int t_cs);
-int simulatePWA(const std::list<Process> &processes, std::ofstream &outfile, int t_cs);
+int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int t_cs, int mem_type);
 
 /**
  * Operating Systems Project 1
@@ -46,19 +44,10 @@ int main (int argc, char* argv[]) {
     int t_cs = 13;
     int finalTime;
 
-    // get the final time in ms and display that the simulator endd
-    finalTime = simulateFCFS(processes, outfile, t_cs);
-    std::cout << "time " << finalTime << "ms: Simulator for FCFS ended [Q]" << std::endl;
-    std::cout << std::endl << std::endl;
-
     // do the same for SRT
-    finalTime = simulateSRT(processes, outfile, t_cs);
+    finalTime = simulateSRT(processes, outfile, t_cs, 0);
     std::cout << "time " << finalTime << "ms: Simulator for SRT ended [Q]" << std::endl;
     std::cout << std::endl << std::endl;
-
-    // and PWA
-    finalTime = simulatePWA(processes, outfile, t_cs);
-    std::cout << "time " << finalTime << "ms: Simulator for PWA ended [Q]" << std::endl;
 
     outfile.close();
 
