@@ -23,14 +23,19 @@ void printMemory(const std::map<int, MemoryPartition>& partitions, int t) {
     int i = 0;
     // loop through all partitions
     while (itr != partitions.end()) {
-        // and get the size of each partition to print that many times
         for (int j=0; j<itr->second.getSize(); j++) {
-
             // if we've reached the end of a printed "block", print a newline
             if (i % 32 == 0) {
                 std::cout << std::endl;
             }
             // print the id character
+#ifdef DEBUG_MODE
+            if (j == 0) {
+                std::cout << '^';
+                i++;
+                continue;
+            }
+#endif
             std::cout << itr->second.getID();
             i++;
         }
@@ -144,6 +149,11 @@ void deallocate(std::map<int, MemoryPartition>& partitions, char id, int t) {
 
 // defragment the partition map provided and return the amount of time taken
 int defragment(std::map<int, MemoryPartition>& partitions, int t) {
+
+    std::cout << "time " << t << "ms: Starting defragmentation (suspending all processes)" << std::endl;
+
+    printMemory(partitions, t);
+
     int t_memmove = 10;
 
     int time = 0;
@@ -155,6 +165,7 @@ int defragment(std::map<int, MemoryPartition>& partitions, int t) {
     
     // loop through all partitions
     while (itr != partitions.end()) {
+        // if we have empty space
         if (part.getID() == '.') {
             partitions[pos] = itr->second;
             time += (t_memmove * itr->second.getSize());
@@ -166,12 +177,17 @@ int defragment(std::map<int, MemoryPartition>& partitions, int t) {
         itr++;
 
         // now combine the empty partitions if necessary
-        if (itr->second.getID() == '.') {
+        if (itr->second.getID() == '.' && part.getID() == '.') {
             MemoryPartition tmp('.', part.getSize() + itr->second.getSize());
             partitions[pos] = tmp;
-            partitions.erase(itr->first);
+            itr = partitions.erase(itr);
         }
     }
+
+    std::cout << "time " << (t + time) << "ms: Completed defragmentation (moved "
+        << (time / t_memmove) << " memory units)" << std::endl;
+
+    printMemory(partitions, t + time);
 
     return time;
 }

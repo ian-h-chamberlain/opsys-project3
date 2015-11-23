@@ -184,6 +184,11 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
 
                 deallocate(memoryBank, 'A'+curProc.getNum(), t);
 
+#ifdef DEBUG_MODE
+                // test defragmentation
+                t += defragment(memoryBank, t);
+#endif
+
                 waitTime += curProc.getWaitTime();
             }
             // or start I/O if not terminated
