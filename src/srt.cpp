@@ -40,15 +40,15 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
     int numBursts = 0;
     int contextSwitches = 0;
 
-    outfile << "time 0ms: Simulator started for SRT and ";
+    std::cout << "time 0ms: Simulator started for SRT and ";
     if (mem_type == 0) {
-        outfile << "First-Fit" << std::endl;
+        std::cout << "First-Fit" << std::endl;
     }
     else if (mem_type == 1) {
-        outfile << "Next-Fit" << std::endl;
+        std::cout << "Next-Fit" << std::endl;
     }
     else {
-        outfile << "Best-Fit" << std::endl;
+        std::cout << "Best-Fit" << std::endl;
     }
 
     procQueue::iterator proc_itr = addQueue.begin();
@@ -56,7 +56,15 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
         burstTime += proc_itr->getBurstTime() * proc_itr->getNumBursts();
         numBursts += proc_itr->getNumBursts();
 
-        if (allocateMemoryFirstFit(memoryBank, 'A' + proc_itr->getNum(), 12, t, 0) < 0) {
+        int tmp;
+        if (mem_type == 0) {
+            tmp = allocateMemoryFirstFit(memoryBank, 'A' + proc_itr->getNum(), 12, t, 0);
+        }
+        else if (mem_type == 1) {
+            tmp = allocateMemoryBestFit(memoryBank, 'A' + proc_itr->getNum(), 12, t);
+        }
+
+        if (tmp < 0) {
             std::cout << "time " << t << "ms: Process '" << ('A' + proc_itr->getNum())
                 << "' unabled to be added; lack of memory" << std::endl;
             t += defragment(memoryBank, t);

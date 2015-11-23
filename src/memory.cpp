@@ -45,6 +45,7 @@ void printMemory(const std::map<int, MemoryPartition>& partitions, int t) {
     std::cout << std::endl << std::string(32, '=') << std::endl;
 }
 
+// allocate the process by first-fit after the offset
 int allocateMemoryFirstFit(std::map<int, MemoryPartition>& partitions,
         char proc, int size, int t, int offset) {
     std::map<int, MemoryPartition>::iterator itr = partitions.find(offset);
@@ -93,6 +94,36 @@ int allocateMemoryFirstFit(std::map<int, MemoryPartition>& partitions,
     }
 
     return -1;
+}
+
+// allocate the process according to best fit
+int allocateMemoryBestFit(std::map<int, MemoryPartition>& partitions, char proc, int size, int t) {
+    std::map<int, MemoryPartition>::iterator itr = partitions.begin();
+
+    int minPos = -1;
+    int minSize = -1;
+
+    while (itr != partitions.end()) {
+        if (itr->second.getID() == '.' && itr->second.getSize() > size) {
+            if (itr->second.getSize() < minSize || minSize < 0) {
+                minPos = itr->first;
+                minSize = itr->second.getSize();
+            }
+        }
+        itr++;
+    }
+
+    if (minPos < 0)
+        return -1;  // failure to find a large enough empty partition
+
+    partitions[minPos].setSize(partitions[minPos].getSize() - size);
+    MemoryPartition tmp(proc, size);
+    partitions[minPos + size] = partitions[minPos];
+    partitions[minPos] = tmp;
+
+    printMemory(partitions, t);
+    return 0;
+
 }
 
 // deallocate memory for the given process

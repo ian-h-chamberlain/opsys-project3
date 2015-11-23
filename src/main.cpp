@@ -49,6 +49,12 @@ int main (int argc, char* argv[]) {
     std::cout << "time " << finalTime << "ms: Simulator for SRT ended [Q]" << std::endl;
     std::cout << std::endl << std::endl;
 
+    // do the same for SRT
+    finalTime = simulateSRT(processes, outfile, t_cs, 1);
+    std::cout << "time " << finalTime << "ms: Simulator for SRT ended [Q]" << std::endl;
+    std::cout << std::endl << std::endl;
+
+
     outfile.close();
 
     return EXIT_SUCCESS;
