@@ -4,8 +4,9 @@
 /**
  * Process(int, int, int, int) - constructs a process using the input
  */
-Process::Process(int num, int b_time, int bursts, int io_time, int priority) {
-    this->proc_num = num;
+Process::Process(char name, int arrive,  int b_time, int bursts, int io_time, int priority) {
+    this->proc_name = name;
+    this->arr_time = arrive;
     this->burst_time = b_time;
     this->num_bursts = bursts;
     this->io_time = io_time;

@@ -46,10 +46,10 @@ int main (int argc, char* argv[]) {
     int t_cs = 13;
     int finalTime;
 
-    // get the final time in ms and display that the simulator endd
+/*    // get the final time in ms and display that the simulator endd
     finalTime = simulateFCFS(processes, outfile, t_cs);
     std::cout << "time " << finalTime << "ms: Simulator for FCFS ended [Q]" << std::endl;
-    std::cout << std::endl << std::endl;
+    std::cout << std::endl << std::endl;*/
 
     // do the same for SRT
     finalTime = simulateSRT(processes, outfile, t_cs);
@@ -89,7 +89,9 @@ int readFile(const std::string &filename, std::list<Process> &processes) {
             // get each number up until '|' or newline, depending on the number
             std::string tmp;
             std::getline(infile, tmp, '|');
-            int p_num = atoi(tmp.c_str());
+            char p_name = tmp[0];
+            std::getline(infile, tmp, '|');
+            int arr_time = atoi(tmp.c_str());
             std::getline(infile, tmp, '|');
             int burst_time = atoi(tmp.c_str());
             std::getline(infile, tmp, '|');
@@ -100,7 +102,7 @@ int readFile(const std::string &filename, std::list<Process> &processes) {
             int priority = atoi(tmp.c_str());
 
             // add the process to the list of processes
-            processes.push_back(Process(p_num, burst_time, num_bursts, io_time, priority));
+            processes.push_back(Process(p_name, arr_time, burst_time, num_bursts, io_time, priority));
         }
     }
 

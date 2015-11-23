@@ -16,7 +16,7 @@ void printQueue(const std::list<Process> &queueToPrint);
 
 int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int t_cs) {
 
-    procQueue execQueue(processes.begin(), processes.end(), CompareProcess());    // the execution queue
+    procQueue execQueue(CompareProcess());    // the execution queue
     std::list<Process> ioQueue; // a container for the processes in I/O
 
     int t = 0;
@@ -29,6 +29,19 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
     int contextSwitches = 0;
 
     outfile << "Algorithm SRT" << std::endl;
+
+
+    //add only arrival time 0s
+    std::list<Process>::iterator proc_itr1 = process.begin();
+    while (proc_itr1 != process.end()) {
+        if (!proc_itr1->getArriveTime()) {
+            execQueue.insert(*proc_itr1);
+            processes.erase(proc_itr1);
+        }
+	else
+	    proc_itr1++;
+    }
+
     procQueue::iterator proc_itr = execQueue.begin();
     while (proc_itr != execQueue.end()) {
         burstTime += proc_itr->getBurstTime() * proc_itr->getNumBursts();
@@ -130,7 +143,7 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
                 contextSwitches++;
             }
             // or start a process if necessary
-            else if (t == curProcTime) {
+            else if (t == curProcTime && t == curProc.getArriveTime()) {
                 std::cout << "time " << t << "ms: P" << curProc.getNum()
                     << " started using the CPU ";
                 printQueue(execQueue);

@@ -5,7 +5,8 @@
  * Process - a data structure to hold information about the processes
  */
 class Process {
-    int proc_num;
+    char proc_name;
+    int arr_time;
     int burst_time;
     int done_time;
     int num_bursts;
@@ -16,9 +17,10 @@ class Process {
     int wait_time;
 
 public:
-    Process(int num, int b_time, int bursts, int io_time, int priority);
+    Process(char name, int arrive, int b_time, int bursts, int io_time, int priority);
     Process();
-    int getNum() const { return proc_num; }
+    char getNum() const { return proc_name; }
+    int getArriveTime() const { return arr_time; }
     int getBurstTime() const { return burst_time; }
     int getNumBursts() const { return num_bursts; }
     int getCurBurst() const { return cur_burst; }

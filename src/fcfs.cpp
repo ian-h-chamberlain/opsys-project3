@@ -68,7 +68,7 @@ int simulateFCFS(const std::list<Process> &processes, std::ofstream &outfile, in
                 }
                 // make an empty process if needed
                 else {
-                    tmp = Process(-1, 0, 0, 0, 0);
+                    tmp = Process(0, 0, 0, 0, 0, 0);
                 }
 
                 std::cout << "time " << itr->getDoneTime() << "ms: P" << itr->getNum()
