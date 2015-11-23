@@ -17,6 +17,7 @@ void printQueue(const procQueue &queueToPrint);
 void printQueue(const std::list<Process> &queueToPrint);
 
 int defragment(std::map<int, MemoryPartition>& partitions, int t);
+void deallocate(std::map<int, MemoryPartition>& partitions, char id, int t);
 int allocateMemoryFirstFit(std::map<int, MemoryPartition>& partitions, char proc, int size, int t, int offset);
 int allocateMemoryBestFit(std::map<int, MemoryPartition>& partitions, char proc, int size, int t);
 
@@ -51,18 +52,16 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
     }
 
     procQueue::iterator proc_itr = addQueue.begin();
-    int i = 0;
     while (proc_itr != addQueue.end()) {
         burstTime += proc_itr->getBurstTime() * proc_itr->getNumBursts();
         numBursts += proc_itr->getNumBursts();
 
-        if (allocateMemoryFirstFit(memoryBank, 'A' + i, 12, t, 0) < 0) {
-#ifdef DEBUG_MODE
-            std::cout << "Error with allocation!" << std::endl;
-#endif
+        if (allocateMemoryFirstFit(memoryBank, 'A' + proc_itr->getNum(), 12, t, 0) < 0) {
+            std::cout << "time " << t << "ms: Process '" << ('A' + proc_itr->getNum())
+                << "' unabled to be added; lack of memory" << std::endl;
+            t += defragment(memoryBank, t);
         }
         execQueue.insert(*proc_itr);
-        i++;
 
         proc_itr++;
     }
@@ -182,6 +181,9 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
                 std::cout << "time " << t << "ms: P" << curProc.getNum()
                     << " terminated ";
                 printQueue(execQueue);
+
+                deallocate(memoryBank, 'A'+curProc.getNum(), t);
+
                 waitTime += curProc.getWaitTime();
             }
             // or start I/O if not terminated

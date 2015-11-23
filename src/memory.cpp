@@ -90,6 +90,88 @@ int allocateMemoryFirstFit(std::map<int, MemoryPartition>& partitions,
     return -1;
 }
 
+// deallocate memory for the given process
+void deallocate(std::map<int, MemoryPartition>& partitions, char id, int t) {
+    std::map<int, MemoryPartition>::iterator itr = partitions.begin();
+
+    int pos = -1;
+    while (itr != partitions.end()) {
+        if (itr->second.getID() == id) {
+            pos = itr->first;
+            break;
+        }
+        itr++;
+    }
+
+#ifdef DEBUG_MODE
+    if (pos < 0) {
+        std::cout << "Process to deallocate: '" << id << "' not found" << std::endl;
+        return;
+    }
+#endif
+
+    int startPos = itr->first;
+    int endPos = itr->first + itr->second.getSize();
+
+    std::map<int, MemoryPartition>::iterator prevItr = itr;
+
+    // check if the previous partition needs to be merged
+    if (pos > 0) {
+        prevItr--;
+
+        if (prevItr->second.getID() == '.') {
+            startPos = prevItr->first;
+            partitions.erase(prevItr);
+        }
+    }
+
+    // check the next partition after this one
+    std::map<int, MemoryPartition>::iterator nextItr = itr;
+    nextItr++;
+
+    if (nextItr != partitions.end() && nextItr->second.getID() == '.') {
+        endPos = nextItr->first + nextItr->second.getSize();
+        partitions.erase(nextItr);
+    }
+
+    partitions.erase(itr);
+
+    MemoryPartition tmp('.', endPos - startPos);
+    partitions[startPos] = tmp;
+
+    printMemory(partitions, t);
+}
+
+// defragment the partition map provided and return the amount of time taken
 int defragment(std::map<int, MemoryPartition>& partitions, int t) {
-    return 0;
+    int t_memmove = 10;
+
+    int time = 0;
+
+    std::map<int, MemoryPartition>::iterator itr = partitions.begin();
+    MemoryPartition part = itr->second;
+    int pos = itr->first;
+    itr++;
+    
+    // loop through all partitions
+    while (itr != partitions.end()) {
+        if (part.getID() == '.') {
+            partitions[pos] = itr->second;
+            time += (t_memmove * itr->second.getSize());
+            MemoryPartition tmp('.', itr->second.getSize());
+            partitions[itr->first] = tmp;
+        }
+        part = itr->second;
+        pos = itr->first;
+        itr++;
+
+        // now combine the empty partitions if necessary
+        if (itr->second.getID() == '.') {
+            MemoryPartition tmp('.', part.getSize() + itr->second.getSize());
+            partitions[pos] = tmp;
+            partitions.erase(itr->first);
+        }
+    }
+
+    return time;
 }
