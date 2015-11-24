@@ -209,7 +209,10 @@ int defragment(std::map<int, MemoryPartition>& partitions, int *t) {
         if (itr->second.getID() == '.' && part.getID() == '.') {
             MemoryPartition tmp('.', part.getSize() + itr->second.getSize());
             partitions[pos] = tmp;
-            itr = partitions.erase(itr);
+            std::map<int, MemoryPartition>::iterator tmp_itr = itr;
+            tmp_itr++;
+            partitions.erase(itr);
+            itr = tmp_itr;
         }
     }
 
