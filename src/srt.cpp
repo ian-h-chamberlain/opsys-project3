@@ -16,7 +16,7 @@ void printQueue(const std::list<Process> &queueToPrint);
 
 int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int t_cs) {
 
-    procQueue execQueue(CompareProcess());    // the execution queue
+    procQueue execQueue;    // the execution queue
     std::list<Process> ioQueue; // a container for the processes in I/O
 
     int t = 0;
@@ -32,14 +32,11 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
 
 
     //add only arrival time 0s
-    std::list<Process>::iterator proc_itr1 = process.begin();
-    while (proc_itr1 != process.end()) {
-        if (!proc_itr1->getArriveTime()) {
+    std::list<Process>::const_iterator proc_itr1 = processes.begin();
+    while (proc_itr1 != processes.end()) {
+        if (!proc_itr1->getArriveTime())
             execQueue.insert(*proc_itr1);
-            processes.erase(proc_itr1);
-        }
-	else
-	    proc_itr1++;
+	proc_itr1++;
     }
 
     procQueue::iterator proc_itr = execQueue.begin();
@@ -60,6 +57,12 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
     // now run the processes
     while (execQueue.size() > 0 || ioQueue.size() > 0 || curProcTime > 0) {
 
+        std::list<Process>::const_iterator proc_itr1 = processes.begin();
+        while (proc_itr1 != processes.end()) {
+            if (proc_itr1->getArriveTime() == t)
+                execQueue.insert(*proc_itr1);
+            proc_itr1++;
+        }
         std::list<Process>::iterator itr = ioQueue.begin();
         // check for completed IO processes
         while (itr != ioQueue.end()) {
@@ -68,8 +71,8 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
                 // temporarily add the process for the sake of output
                 procQueue::iterator tmp = execQueue.insert(*itr).first;
 
-                std::cout << "time " << t << "ms: P" << itr->getNum()
-                    << " completed I/O ";
+                std::cout << "time " << t << "ms: Process '" << itr->getNum()
+                    << "' completed I/O ";
 
                 // actually change the process to reflect that it completed IO
                 itr->runIO();
@@ -84,8 +87,8 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
                     execQueue.erase(tmp);   // we don't need the process in the queue
                     printQueue(execQueue);
                     execQueue.insert(curProc);
-                    std::cout << "time " << t << "ms: P" << curProc.getNum() 
-                        << " preempted by P" << itr->getNum() << " ";
+                    std::cout << "time " << t << "ms: Process '" << curProc.getNum() 
+                        << "' preempted by Process '" << itr->getNum() << "' ";
                     curProc = *itr;
                     curProcTime = t + t_cs;
                     // calculate wait time
@@ -144,8 +147,8 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
             }
             // or start a process if necessary
             else if (t == curProcTime && t == curProc.getArriveTime()) {
-                std::cout << "time " << t << "ms: P" << curProc.getNum()
-                    << " started using the CPU ";
+                std::cout << "time " << t << "ms: Process '" << curProc.getNum()
+                    << "' started using the CPU ";
                 printQueue(execQueue);
             }
             // and finish a process if it's done
@@ -166,19 +169,19 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
 
                 // check for termination
                 if (curProc.isComplete()) {
-                    std::cout << "time " << t << "ms: P" << curProc.getNum()
-                        << " terminated ";
+                    std::cout << "time " << t << "ms: Process '" << curProc.getNum()
+                        << "' terminated ";
                     printQueue(execQueue);
                     waitTime += curProc.getWaitTime();
                 }
                 // or start I/O if not terminated
                 else {
-                    std::cout << "time " << t << "ms: P" << curProc.getNum()
-                        << " completed its CPU burst ";
+                    std::cout << "time " << t << "ms: Process '" << curProc.getNum()
+                        << "' completed its CPU burst ";
                     printQueue(execQueue);
 
-                    std::cout << "time " << t << "ms: P" << curProc.getNum()
-                        << " performing I/O ";
+                    std::cout << "time " << t << "ms: Process '" << curProc.getNum()
+                        << "' performing I/O ";
                     printQueue(execQueue);
 
                     // add the process to I/O
@@ -210,7 +213,7 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
 
 #ifdef DEBUG_MODE
                 printQueue(ioQueue);
-                std::cout << "P" << curProc.getNum() << std::endl;
+                std::cout << "Process '" << curProc.getNum() << "'" << std::endl;
                 std::cout << "  remain: " << curProc.getRemainingTime() << std::endl;
                 std::cout << "  t = " << t << std::endl;
 #endif
