@@ -61,7 +61,7 @@ int allocateMemoryFirstFit(std::map<int, MemoryPartition>& partitions,
         partitions[itr->first + size] = part;
 
         printMemory(partitions, t);
-        return 0;
+        return itr->first;
     }
 
     itr++;
@@ -77,7 +77,7 @@ int allocateMemoryFirstFit(std::map<int, MemoryPartition>& partitions,
             partitions[itr->first + size] = part;
 
             printMemory(partitions, t);
-            return 0;
+            return itr->first;
         }
 #ifdef DEBUG_MODE
         else {
@@ -179,11 +179,11 @@ void deallocate(std::map<int, MemoryPartition>& partitions, char id, int t) {
 }
 
 // defragment the partition map provided and return the amount of time taken
-int defragment(std::map<int, MemoryPartition>& partitions, int t) {
+int defragment(std::map<int, MemoryPartition>& partitions, int *t) {
 
-    std::cout << "time " << t << "ms: Starting defragmentation (suspending all processes)" << std::endl;
+    std::cout << "time " << *t << "ms: Starting defragmentation (suspending all processes)" << std::endl;
 
-    printMemory(partitions, t);
+    printMemory(partitions, *t);
 
     int t_memmove = 10;
 
@@ -215,10 +215,12 @@ int defragment(std::map<int, MemoryPartition>& partitions, int t) {
         }
     }
 
-    std::cout << "time " << (t + time) << "ms: Completed defragmentation (moved "
+    std::cout << "time " << (*t + time) << "ms: Completed defragmentation (moved "
         << (time / t_memmove) << " memory units)" << std::endl;
 
-    printMemory(partitions, t + time);
+    printMemory(partitions, *t + time);
 
-    return time;
+    (*t) += time;
+
+    return pos;
 }

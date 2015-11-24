@@ -16,7 +16,7 @@ typedef std::set<Process, CompareProcess> procQueue;
 void printQueue(const procQueue &queueToPrint);
 void printQueue(const std::list<Process> &queueToPrint);
 
-int defragment(std::map<int, MemoryPartition>& partitions, int t);
+int defragment(std::map<int, MemoryPartition>& partitions, int *t);
 void deallocate(std::map<int, MemoryPartition>& partitions, char id, int t);
 int allocateMemoryFirstFit(std::map<int, MemoryPartition>& partitions, char proc, int size, int t, int offset);
 int allocateMemoryBestFit(std::map<int, MemoryPartition>& partitions, char proc, int size, int t);
@@ -52,6 +52,7 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
     }
 
     procQueue::iterator proc_itr = addQueue.begin();
+    int last_alloc = 0;
     while (proc_itr != addQueue.end()) {
         burstTime += proc_itr->getBurstTime() * proc_itr->getNumBursts();
         numBursts += proc_itr->getNumBursts();
@@ -61,14 +62,22 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
             tmp = allocateMemoryFirstFit(memoryBank, 'A' + proc_itr->getNum(), 12, t, 0);
         }
         else if (mem_type == 1) {
+            tmp = allocateMemoryFirstFit(memoryBank, 'A' + proc_itr->getNum(), 12, t, last_alloc);
+        }
+        else if (mem_type == 2) {
             tmp = allocateMemoryBestFit(memoryBank, 'A' + proc_itr->getNum(), 12, t);
         }
 
         if (tmp < 0) {
             std::cout << "time " << t << "ms: Process '" << ('A' + proc_itr->getNum())
                 << "' unabled to be added; lack of memory" << std::endl;
-            t += defragment(memoryBank, t);
+            last_alloc = defragment(memoryBank, &t);
+            continue;
         }
+        else if (mem_type == 1) {
+            last_alloc = tmp;
+        }
+
         execQueue.insert(*proc_itr);
 
         proc_itr++;
@@ -194,7 +203,7 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
 
 #ifdef DEBUG_MODE
                 // test defragmentation
-                t += defragment(memoryBank, t);
+                t += defragment(memoryBank, &t);
 #endif
 
                 waitTime += curProc.getWaitTime();
