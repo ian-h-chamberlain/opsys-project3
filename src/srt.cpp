@@ -37,77 +37,78 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
     double burstTime = 0.0;
     double waitTime = 0.0;
     double turnaroundTime = 0.0;
+    double defragTime = 0.0;
     int numBursts = 0;
     int contextSwitches = 0;
 
     std::cout << "time 0ms: Simulator started for SRT and ";
     if (mem_type == 0) {
         std::cout << "First-Fit" << std::endl;
+        outfile << "SRT and First-Fit" << std::endl;
     }
     else if (mem_type == 1) {
         std::cout << "Next-Fit" << std::endl;
+        outfile << "SRT and Next-Fit" << std::endl;
     }
     else {
         std::cout << "Best-Fit" << std::endl;
+        outfile << "SRT and Best-Fit" << std::endl;
     }
-
-    //add only arrival time 0s
-    std::list<Process>::const_iterator proc_itr1 = processes.begin();
-    while (proc_itr1 != processes.end()) {
-        if (!proc_itr1->getArriveTime())
-            execQueue.insert(*proc_itr1);
-        proc_itr1++;
-    }
-
-#ifdef DEBUG_MODE
-    std::cout << "execQueue has: " << execQueue.size() << std::endl;
-#endif
-
-    procQueue::iterator proc_itr = execQueue.begin();
 
     int last_alloc = 0;
 
-    while (proc_itr != execQueue.end()) {
-        burstTime += proc_itr->getBurstTime() * proc_itr->getNumBursts();
-        numBursts += proc_itr->getNumBursts();
-
-        int tmp;
-        if (mem_type == 0) {
-            tmp = allocateMemoryFirstFit(memoryBank, proc_itr->getNum(), 12, t, 0);
-        }
-        else if (mem_type == 1) {
-            tmp = allocateMemoryFirstFit(memoryBank, proc_itr->getNum(), 12, t, last_alloc);
-        }
-        else if (mem_type == 2) {
-            tmp = allocateMemoryBestFit(memoryBank, proc_itr->getNum(), 12, t);
-        }
-
-        if (tmp < 0) {
-            std::cout << "time " << t << "ms: Process '" << proc_itr->getNum()
-                << "' unabled to be added; lack of memory" << std::endl;
-            last_alloc = defragment(memoryBank, &t);
-            continue;
-        }
-        else if (mem_type == 1) {
-            last_alloc = tmp;
-        }
-
-        proc_itr++;
-    }
-
-    // get the first process
-    Process curProc = *(execQueue.begin());
-    execQueue.erase(execQueue.begin());
+    procQueue::iterator proc_itr;
+    Process curProc;
 
     // now run the processes
-    while (execQueue.size() > 0 || ioQueue.size() > 0 || curProcTime > 0) {
+    while (t == 0 || execQueue.size() > 0 || ioQueue.size() > 0 || curProcTime > 0) {
 
         std::list<Process>::const_iterator proc_itr1 = processes.begin();
         while (proc_itr1 != processes.end()) {
-            if (proc_itr1->getArriveTime() == t)
+            if (proc_itr1->getArriveTime() == t) {
+                std::cout << "time " << t << "ms: Process '" << proc_itr1->getNum()
+                    << "' added to system ";
+
                 execQueue.insert(*proc_itr1);
+                printQueue(execQueue);
+
+                numBursts += proc_itr1->getNumBursts();
+
+                int tmp;
+                if (mem_type == 0) {
+                    tmp = allocateMemoryFirstFit(memoryBank, proc_itr1->getNum(), proc_itr1->getPriority(), t, 0);
+                }
+                else if (mem_type == 1) {
+                    tmp = allocateMemoryFirstFit(memoryBank, proc_itr1->getNum(), proc_itr1->getPriority(), t, last_alloc);
+                }
+                else if (mem_type == 2) {
+                    tmp = allocateMemoryBestFit(memoryBank, proc_itr1->getNum(), proc_itr1->getPriority(), t);
+                }
+
+                if (tmp < 0) {
+                    std::cout << "time " << t << "ms: Process '" << proc_itr->getNum()
+                        << "' unabled to be added; lack of memory" << std::endl;
+                    int old_t = t;
+                    last_alloc = defragment(memoryBank, &t);
+
+                    // account for defrag time in statistics
+                    waitTime += (t - old_t);
+                    defragTime += (t - old_t);
+                    continue;
+                }
+                else if (mem_type == 1) {
+                    last_alloc = tmp;
+                }
+            }
             proc_itr1++;
+        } 
+
+        if (t == 0) {
+            proc_itr = execQueue.begin();
+            curProc = *proc_itr;
+            execQueue.erase(execQueue.begin());
         }
+
         std::list<Process>::iterator itr = ioQueue.begin();
         // check for completed IO processes
         while (itr != ioQueue.end()) {
@@ -190,7 +191,7 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
             contextSwitches++;
         }
         // or start a process if necessary
-        else if (t == curProcTime && t == curProc.getArriveTime()) {
+        else if (t == curProcTime || t == curProc.getArriveTime()) {
             std::cout << "time " << t << "ms: Process '" << curProc.getNum()
                 << "' started using the CPU ";
             printQueue(execQueue);
@@ -200,6 +201,7 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
 
             if (!curProc.isComplete()) {
                 curProc.runBurst(t);
+                burstTime += curProc.getBurstTime();
 
 #ifdef DEBUG_MODE
                 std::cout << "burst run:" << std::endl;
@@ -213,8 +215,8 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
 
             // check for termination
             if (curProc.isComplete()) {
-                std::cout << "time " << t << "ms: P" << curProc.getNum()
-                    << " terminated ";
+                std::cout << "time " << t << "ms: Process '" << curProc.getNum()
+                    << "' terminated ";
                 printQueue(execQueue);
 
                 deallocate(memoryBank, curProc.getNum(), t);
@@ -222,12 +224,12 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
             }
             // or start I/O if not terminated
             else {
-                std::cout << "time " << t << "ms: P" << curProc.getNum()
-                    << " completed its CPU burst ";
+                std::cout << "time " << t << "ms: Process '" << curProc.getNum()
+                    << "' completed its CPU burst ";
                 printQueue(execQueue);
 
-                std::cout << "time " << t << "ms: P" << curProc.getNum()
-                    << " performing I/O ";
+                std::cout << "time " << t << "ms: Process '" << curProc.getNum()
+                    << "' performing I/O ";
                 printQueue(execQueue);
 
                 // add the process to I/O
@@ -285,6 +287,7 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
     burstTime /= numBursts;
     waitTime /= numBursts;
     turnaroundTime /= numBursts;
+
     outfile << "-- average CPU burst time: ";
     outfile << std::setprecision(5) << burstTime << " ms" << std::endl;;
     outfile << "-- average wait time: ";
@@ -292,6 +295,10 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
     outfile << "-- average turnaround time: ";
     outfile << std::setprecision(2) << turnaroundTime << " ms" << std::endl;
     outfile << "-- total number of context switches: " << contextSwitches << std::endl;
+    outfile << "-- total defragmentation time: ";
+    outfile << std::setprecision(0) << defragTime << " ms" << std::endl;
+    outfile << "-- percentage defragmentation time: ";
+    outfile << std::setprecision(0) << (100 * defragTime) / t << std::endl;
 
     return t;
 

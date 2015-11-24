@@ -139,12 +139,10 @@ void deallocate(std::map<int, MemoryPartition>& partitions, char id, int t) {
         itr++;
     }
 
-#ifdef DEBUG_MODE
     if (pos < 0) {
         std::cout << "Process to deallocate: '" << id << "' not found" << std::endl;
         return;
     }
-#endif
 
     int startPos = itr->first;
     int endPos = itr->first + itr->second.getSize();
