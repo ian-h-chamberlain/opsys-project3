@@ -1,10 +1,1 @@
-Algorithm SRT
--- average CPU burst time: 204.17
--- average wait time: 473.33
--- average turnaround time: 677.50
--- total number of context switches: 18
-Algorithm PWA
--- average CPU burst time: 403.84615
--- average wait time: 186.85
--- average turnaround time: 590.69
--- total number of context switches: 20
+SRT and First-Fit

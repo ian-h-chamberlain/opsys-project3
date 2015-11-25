@@ -9,6 +9,7 @@
 
 int readFile(const std::string &filename, std::list<Process> &processes);
 int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int t_cs, int mem_type);
+int simulateRR(const std::list<Process> &processes, std::ofstream &outfile, int t_cs, int t_sl, int mem_type);
 
 /**
  * Operating Systems Project 1
@@ -45,17 +46,17 @@ int main (int argc, char* argv[]) {
     int finalTime;
 
     // simulate SRT with first-fit
-    finalTime = simulateSRT(processes, outfile, t_cs, 0);
+    finalTime = simulateRR(processes, outfile, t_cs, 0, 0);
     std::cout << "time " << finalTime << "ms: Simulator for SRT ended [Q]" << std::endl;
     std::cout << std::endl << std::endl;
 
     // do the same for next-fit
-    finalTime = simulateSRT(processes, outfile, t_cs, 1);
+    finalTime = simulateRR(processes, outfile, t_cs, 0, 1);
     std::cout << "time " << finalTime << "ms: Simulator for SRT ended [Q]" << std::endl;
     std::cout << std::endl << std::endl;
 
     // and best-fit
-    finalTime = simulateSRT(processes, outfile, t_cs, 2);
+    finalTime = simulateRR(processes, outfile, t_cs, 0, 2);
     std::cout << "time " << finalTime << "ms: Simulator for SRT ended [Q]" << std::endl;
     std::cout << std::endl << std::endl;
 
