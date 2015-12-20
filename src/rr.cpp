@@ -84,6 +84,11 @@ int simulateRR(const std::list<Process> &processes, std::ofstream &outfile, int 
                 else if (mem_type == 2) {
                     tmp = allocateMemoryBestFit(memoryBank, proc_itr1->getNum(), proc_itr1->getPriority(), t);
                 }
+                else {
+                    // error
+                    std::cerr << "ERROR: invalid memory type" << std::endl;
+                    return -1;
+                }
 
                 if (tmp < 0) {
                     std::cout << "time " << t << "ms: Process '" << proc_itr->getNum()
@@ -116,7 +121,8 @@ int simulateRR(const std::list<Process> &processes, std::ofstream &outfile, int 
 
                 // temporarily add the process for the sake of output
                 procQueue::iterator tmp = execQueue.end();
-		execQueue.push_back(*itr);
+                execQueue.push_back(*itr);
+                tmp--;
 
                 std::cout << "time " << t << "ms: Process '" << itr->getNum()
                     << "' completed I/O ";
