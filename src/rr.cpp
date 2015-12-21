@@ -68,7 +68,7 @@ int simulateRR(const std::list<Process> &processes, std::ofstream &outfile, int 
     Process curProc;
 
     // now run the processes
-    while (t == 0 || execQueue.size() > 0 || ioQueue.size() > 0 || curProcTime > 0) {
+    while (t == 0 || execQueue.size() > 0 || ioQueue.size() > 0 || curProcTime > 0 || !curProc.isComplete()) {
 
         std::list<Process>::const_iterator proc_itr1 = processes.begin();
         while (proc_itr1 != processes.end()) {
