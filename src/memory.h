@@ -1,3 +1,9 @@
+/**
+ * Operating Systems Project 3
+ * Ian Chamberlain & Brian Kovacik
+ *
+ * Reads an input file of processes and simulates them
+ */
 #ifndef MEMORY_H
 #define MEMORY_H
 

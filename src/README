@@ -1,0 +1,2 @@
+The application can be compiled with g++ -Wall main.cpp memory.cpp process.cpp rr.cpp srt.cpp
+The modification date of rr.cpp is today because we were tinkering with it. However, we commented out the changed portion, so it should be functionally the same as when submitted one week ago.

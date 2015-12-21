@@ -1,3 +1,9 @@
+/**
+ * Operating Systems Project 3
+ * Ian Chamberlain & Brian Kovacik
+ *
+ * Reads an input file of processes and simulates them
+ */
 #include <list>
 #include <iostream>
 #include <algorithm>
@@ -41,18 +47,18 @@ int simulateRR(const std::list<Process> &processes, std::ofstream &outfile, int 
     int numBursts = 0;
     int contextSwitches = 0;
 
-    std::cout << "time 0ms: Simulator started for SRT and ";
+    std::cout << "time 0ms: Simulator started for RR and ";
     if (mem_type == 0) {
         std::cout << "First-Fit" << std::endl;
-        outfile << "SRT and First-Fit" << std::endl;
+        outfile << "RR and First-Fit" << std::endl;
     }
     else if (mem_type == 1) {
         std::cout << "Next-Fit" << std::endl;
-        outfile << "SRT and Next-Fit" << std::endl;
+        outfile << "RR and Next-Fit" << std::endl;
     }
     else {
         std::cout << "Best-Fit" << std::endl;
-        outfile << "SRT and Best-Fit" << std::endl;
+        outfile << "RR and Best-Fit" << std::endl;
     }
 
     int last_alloc = 0;
@@ -117,6 +123,7 @@ int simulateRR(const std::list<Process> &processes, std::ofstream &outfile, int 
                 // temporarily add the process for the sake of output
                 procQueue::iterator tmp = execQueue.end();
 		execQueue.push_back(*itr);
+		tmp--;
 
                 std::cout << "time " << t << "ms: Process '" << itr->getNum()
                     << "' completed I/O ";
@@ -280,6 +287,16 @@ int simulateRR(const std::list<Process> &processes, std::ofstream &outfile, int 
                 proc_itr = tmp_itr;
             }
         }
+/*** New stuff, don't grade
+std::cerr << curProc.getNum() << std::endl;
+	if (t-curProcTime == t_sl && t && execQueue.size()) {
+		std::cout << "time " << t << "ms: Process '" << curProc.getNum() << "' preempted due to time slice expiration ";
+		procQueue::iterator pos = execQueue.erase(execQueue.begin());
+		execQueue.push_back(*pos);
+		printQueue1(execQueue);	
+	}
+*/
+
     }
 
     turnaroundTime = burstTime + waitTime;
