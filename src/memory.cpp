@@ -171,8 +171,17 @@ void deallocate(std::map<int, MemoryPartition>& partitions, char id, int t) {
 
     if (nextItr != partitions.end() && nextItr->second.getID() == '.') {
         endPos = nextItr->first + nextItr->second.getSize();
+#ifdef DEBUG_MODE
+        std::cout << "nextItr->first is " << nextItr->first << std::endl;
+        std::cout << "EndPos is " << endPos << std::endl;
+#endif
         partitions.erase(nextItr);
     }
+
+#ifdef DEBUG_MODE
+    std::cout << "startpos is " << startPos << std::endl;
+    std::cout << "size is " << itr->second.getSize() << std::endl;
+#endif
 
     partitions.erase(itr);
 
@@ -205,7 +214,13 @@ int defragment(std::map<int, MemoryPartition>& partitions, int *t) {
             partitions[pos] = itr->second;
             time += (t_memmove * itr->second.getSize());
             MemoryPartition tmp('.', part.getSize());
-            partitions[itr->first] = tmp;
+#ifdef DEBUG_MODE
+            std::cout << "itr->second.getsize is " << itr->second.getSize() << std::endl;
+            std::cout << "part->getsize is " << part.getSize() << std::endl;
+            std::cout << "itr->first is " << itr->first << std::endl;
+#endif
+            partitions.erase(itr->first);
+            partitions[pos + itr->second.getSize()] = tmp;
         }
         part = itr->second;
         pos = itr->first;
