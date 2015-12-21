@@ -48,17 +48,17 @@ int main (int argc, char* argv[]) {
 
     // simulate RR with first-fit
     finalTime = simulateRR(processes, outfile, t_cs, 20, 0);
-    std::cout << "time " << finalTime << "ms: Simulator for SRT ended [Q]" << std::endl;
+    std::cout << "time " << finalTime << "ms: Simulator for RR ended [Q]" << std::endl;
     std::cout << std::endl << std::endl;
 
     // do the same for next-fit
     finalTime = simulateRR(processes, outfile, t_cs, 20, 1);
-    std::cout << "time " << finalTime << "ms: Simulator for SRT ended [Q]" << std::endl;
+    std::cout << "time " << finalTime << "ms: Simulator for RR ended [Q]" << std::endl;
     std::cout << std::endl << std::endl;
 
     // and best-fit
     finalTime = simulateRR(processes, outfile, t_cs, 20, 2);
-    std::cout << "time " << finalTime << "ms: Simulator for SRT ended [Q]" << std::endl;
+    std::cout << "time " << finalTime << "ms: Simulator for RR ended [Q]" << std::endl;
 
     // simulate SRT with first-fit
     finalTime = simulateSRT(processes, outfile, t_cs, 0);

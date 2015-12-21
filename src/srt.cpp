@@ -24,6 +24,7 @@ void printQueue(const std::list<Process> &queueToPrint);
 
 int defragment(std::map<int, MemoryPartition>& partitions, int *t);
 void deallocate(std::map<int, MemoryPartition>& partitions, char id, int t);
+void printMemory(const std::map<int, MemoryPartition>& partitions, int t);
 int allocateMemoryFirstFit(std::map<int, MemoryPartition>& partitions, char proc, int size, int t, int offset);
 int allocateMemoryBestFit(std::map<int, MemoryPartition>& partitions, char proc, int size, int t);
 
@@ -72,13 +73,6 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
         std::list<Process>::const_iterator proc_itr1 = processes.begin();
         while (proc_itr1 != processes.end()) {
             if (proc_itr1->getArriveTime() == t) {
-                std::cout << "time " << t << "ms: Process '" << proc_itr1->getNum()
-                    << "' added to system ";
-
-                execQueue.insert(*proc_itr1);
-                printQueue(execQueue);
-
-                numBursts += proc_itr1->getNumBursts();
 
                 int tmp;
                 if (mem_type == 0) {
@@ -97,18 +91,34 @@ int simulateSRT(const std::list<Process> &processes, std::ofstream &outfile, int
                 }
 
                 if (tmp < 0) {
-                    std::cout << "time " << t << "ms: Process '" << proc_itr->getNum()
+                    std::cout << "time " << t << "ms: Process '" << proc_itr1->getNum()
                         << "' unabled to be added; lack of memory" << std::endl;
                     int old_t = t;
                     last_alloc = defragment(memoryBank, &t);
+
+                    if (t - old_t <= 0) {
+                        // no room for process, skip it
+                        proc_itr1++;
+                    }
 
                     // account for defrag time in statistics
                     waitTime += (t - old_t);
                     defragTime += (t - old_t);
                     continue;
                 }
-                else if (mem_type == 1) {
-                    last_alloc = tmp;
+                else {
+                    if (mem_type == 1)
+                        last_alloc = tmp;
+
+                    std::cout << "time " << t << "ms: Process '" << proc_itr1->getNum()
+                        << "' added to system ";
+
+                    execQueue.insert(*proc_itr1);
+                    printQueue(execQueue);
+
+                    numBursts += proc_itr1->getNumBursts();
+
+                    printMemory(memoryBank, t);
                 }
             }
             proc_itr1++;

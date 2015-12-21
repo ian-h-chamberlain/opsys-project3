@@ -66,7 +66,7 @@ int allocateMemoryFirstFit(std::map<int, MemoryPartition>& partitions,
         partitions[itr->first] = tmp;
         partitions[itr->first + size] = part;
 
-        printMemory(partitions, t);
+        // printMemory(partitions, t);
         return itr->first;
     }
 
@@ -82,7 +82,7 @@ int allocateMemoryFirstFit(std::map<int, MemoryPartition>& partitions,
             partitions[itr->first] = tmp;
             partitions[itr->first + size] = part;
 
-            printMemory(partitions, t);
+            // printMemory(partitions, t);
             return itr->first;
         }
 #ifdef DEBUG_MODE
@@ -127,7 +127,7 @@ int allocateMemoryBestFit(std::map<int, MemoryPartition>& partitions, char proc,
     partitions[minPos + size] = partitions[minPos];
     partitions[minPos] = tmp;
 
-    printMemory(partitions, t);
+    // printMemory(partitions, t);
     return 0;
 
 }
