@@ -204,12 +204,16 @@ int defragment(std::map<int, MemoryPartition>& partitions, int *t) {
         if (part.getID() == '.') {
             partitions[pos] = itr->second;
             time += (t_memmove * itr->second.getSize());
-            MemoryPartition tmp('.', itr->second.getSize());
+            MemoryPartition tmp('.', part.getSize());
             partitions[itr->first] = tmp;
         }
         part = itr->second;
         pos = itr->first;
         itr++;
+
+#ifdef DEBUG_MODE
+        printMemory(partitions, *t);
+#endif
 
         // now combine the empty partitions if necessary
         if (itr->second.getID() == '.' && part.getID() == '.') {
@@ -220,6 +224,9 @@ int defragment(std::map<int, MemoryPartition>& partitions, int *t) {
             partitions.erase(itr);
             itr = tmp_itr;
         }
+#ifdef DEBUG_MODE
+        printMemory(partitions, *t);
+#endif
     }
 
     std::cout << "time " << (*t + time) << "ms: Completed defragmentation (moved "
